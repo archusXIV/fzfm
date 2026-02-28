@@ -26,8 +26,6 @@ ascii_file="$config_dir/fzfm_ascii"
 
 source "$config"
 
-echo -ne "\e[8;${LINES};${COLUMNS}t"
-
 _usage() {
     tput clear
     echo
@@ -75,11 +73,6 @@ while getopts "b:e:f:i:m:o:p:s:" opt; do
 done
 
 shift $(( OPTIND - 1 ))
-
-# default colors if not set
-: "${BACKGROUND:="#000000"}"
-: "${SEL_BACKGROUND:="#000000"}"
-: "${POINTER:="#990900"}"
 
 # shell color syntax for prompts
 red=$'\e[31m'
