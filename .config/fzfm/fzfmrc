@@ -45,7 +45,7 @@ PLSTS_EXTS="(.asx|.m3u|.pls|.ra?m|.wpl|.xspf)"
 OTHER_EXTS="(.gz|.iso|.pdf|.rar|.xz|.zip|.zst)"
 # be asked or not before opening $OTHER_EXTS or files without extension
 # true/false
-OPEN_ANY=true
+OPEN_ANY=false
 
 ############## MPV OPTIONS ##############
 mpvOptions=(

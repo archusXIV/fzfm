@@ -40,10 +40,11 @@ cp -r .config/fzfm/ ~/.config/fzfm/
 | `ctrl-t` | create a file or directory |
 | `ctrl-x` | cut (move) selected file(s) |
 | `ctrl-y` | yank selected file(s) |
+| `ctrl-z` | deselect file(s) |
 | `esc` | exit |
 
 ## Dynamic settings
-After editing fzfmrc using F12, new settings are applied if correct.
+After editing [fzfmrc](https://github.com/archusXIV/fzfm/blob/main/.config/fzfm/fzfmrc) using F12, new settings are applied if correct.
 
 ## Credits
 Thanks to all the fzf devs and maintainers for their greater work.
