@@ -31,7 +31,7 @@ POINTER=yellow
 
 ################# TOOLS #################
 # terminal text editor (opens within fzfm)
-FZFM_EDITOR=${VISUAL:-vim}
+FZFM_EDITOR=vim
 IMAGE_VIEWER=sxiv
 FILE_INFO=exiftool
 MEDIA_INFO=mediainfo

@@ -23,6 +23,7 @@ script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
 ascii_file="$config_dir/fzfm_ascii"
+source "$config"
 
 _usage() {
     tput clear
@@ -35,13 +36,12 @@ _usage() {
     Press Ctrl-C or ESC to exit.
 
     Available options:
-    -e <editor>       :Set your editor for editing files.
-    -f <program>      :Set a program to get infos from selected file.
+    -e <editor>       :Set your editor for editing files (default:vim).
+    -f <program>      :Set a program to get infos from selected file (default:exiftool).
     -h|--help         :Print this message and exit.
-    -i <image viewer> :Set a program to open image files.
-    -m <program>      :Set a program to get infos from selected media file.
-    -o <true/false>   :Allow or not your editor to open whatever selected file is.
-    -p <player>       :Set a program to play selected media file.
+    -i <image viewer> :Set a program to open image files (default:sxiv).
+    -m <program>      :Set a program to get infos from selected media file (default:mediainfo).
+    -p <player>       :Set a program to play selected media file (default:mpv).
 
     Example:
     $script_name -e nano -i feh -f exiftool -m mediainfo
@@ -52,13 +52,12 @@ USAGE
 [[ $1 =~ -h|--help ]] && _usage
 
 # Parsing command-line options
-while getopts "e:f:i:m:o:p:" opt; do
+while getopts "e:f:i:m:p:" opt; do
     case $opt in
         e) FZFM_EDITOR="$OPTARG" ;;
         f) FILE_INFO="$OPTARG" ;;
         i) IMAGE_VIEWER="$OPTARG" ;;
         m) MEDIA_INFO="$OPTARG" ;;
-        o) OPEN_ANY="$OPTARG" ;;
         p) MEDIA_PLAYER="$OPTARG" ;;
         *) _usage ;;
     esac
@@ -75,7 +74,6 @@ noc=$'\e[0m'
 declare -a copy_buffer=()
 source_file=""
 
-source "$config"
 # Ensure required tools are installed
 declare -a packages=(
     bat chafa "$FILE_INFO" fzf stat tree
