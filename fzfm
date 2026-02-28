@@ -24,10 +24,6 @@ config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
 ascii_file="$config_dir/fzfm_ascii"
 
-source "$config"
-
-# echo -ne "\e[8;${LINES};${COLUMNS}t"
-
 _usage() {
     tput clear
     echo
@@ -79,6 +75,7 @@ noc=$'\e[0m'
 declare -a copy_buffer=()
 source_file=""
 
+source "$config"
 # Ensure required tools are installed
 declare -a packages=(
     bat chafa "$FILE_INFO" fzf stat tree
@@ -117,14 +114,13 @@ _mediaPlayer() {
 
 # Main loop for navigation
 while true; do
-    source "$config"
+    : "${LINES:=35}"
+    : "${COLUMNS:=130}"
     echo -ne "\e[8;${LINES};${COLUMNS}t"
-    # default colors if not set
     : "${BACKGROUND:="#000000"}"
     : "${SEL_BACKGROUND:="#000000"}"
     : "${POINTER:="#990900"}"
-    mapfile -t marker < <(echo "$BACKGROUND")
-
+    mapfile -t marker <<< "$BACKGROUND"
     export FZF_DEFAULT_OPTS="
         --bind ctrl-a:toggle-all,ctrl-z:deselect
         --bind ctrl-f:first,ctrl-l:last,f12:accept
@@ -194,7 +190,7 @@ while true; do
     selection="${fzf_output[1]}"
 
     case $key in
-        f12) "$FZFM_EDITOR" "$config"; continue ;;
+        f12) "$FZFM_EDITOR" "$config" && source "$config"; continue ;;
         ctrl-d)
             tput clear
             # Get all selected items except ctrl-d
