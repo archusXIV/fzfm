@@ -1,7 +1,32 @@
 # fzfm
 A simple fzf file manager for Linux
 
-![screenshot](https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_v0.1.9.png)
+<table width="100%">
+  <tr>
+    <th>main</th>
+    <th>image preview</th>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_v0.1.9.png" />
+    </td>
+    <td width="50%">
+      <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_image.png" />
+    </td>
+  </tr>
+  <tr>
+    <th>media info</th>
+    <th>tree</th>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_media.png" />
+    </td>
+    <td width="50%">
+      <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_tree.png" />
+    </td>
+  </tr>
+</table>
 
 FZFM uses a configuration file (~/.config/fzfm/fzfmrc) where customization can be done:
 - colors
