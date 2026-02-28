@@ -16,7 +16,7 @@ A simple fzf file manager for Linux
   </tr>
   <tr>
     <th>media info</th>
-    <th>tree</th>
+    <th>tree view</th>
   </tr>
   <tr>
     <td width="50%">
