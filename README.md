@@ -9,10 +9,15 @@ FZFM uses a configuration file (~/.config/fzfm/fzfmrc) where customization can b
 - files extensions definition
 - mpv options (if MEDIA_PLAYER=mpv)
 
+When copying/pasting in the same directory, the new one will be named with an underscore
+- example: my_file -> myfile_ (same as [ranger](https://ranger.fm/) does)
+
+Some prompts may appear when deleting, creating files
+
 ## Dependencies
 - bat: for files preview
 - chafa: for images preview
-- fzf (of course)
+- [fzf](https://github.com/junegunn/fzf) (of course)
 - stat: for file permission display
 - tree: for directories preview
 
