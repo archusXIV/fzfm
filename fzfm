@@ -130,6 +130,10 @@ _mediaPlayer() {
 while true; do
     source "$config"
     echo -ne "\e[8;${LINES};${COLUMNS}t"
+    # default colors if not set
+    : "${BACKGROUND:="#000000"}"
+    : "${SEL_BACKGROUND:="#000000"}"
+    : "${POINTER:="#990900"}"
     mapfile -t marker < <(echo "$BACKGROUND")
 
     export FZF_DEFAULT_OPTS="
