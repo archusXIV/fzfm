@@ -26,6 +26,8 @@ ascii_file="$config_dir/fzfm_ascii"
 
 source "$config"
 
+# echo -ne "\e[8;${LINES};${COLUMNS}t"
+
 _usage() {
     tput clear
     echo
@@ -37,8 +39,6 @@ _usage() {
     Press Ctrl-C or ESC to exit.
 
     Available options:
-    -b <"#XXXXXX">    :Set the terminal background in hexadecimal color.
-    -b <color name>   :black, red, green, yellow, blue, magenta, cyan, white
     -e <editor>       :Set your editor for editing files.
     -f <program>      :Set a program to get infos from selected file.
     -h|--help         :Print this message and exit.
@@ -46,11 +46,9 @@ _usage() {
     -m <program>      :Set a program to get infos from selected media file.
     -o <true/false>   :Allow or not your editor to open whatever selected file is.
     -p <player>       :Set a program to play selected media file.
-    -s <"#XXXXXX">    :Set the highlighted item background in hexadecimal color.
-    -s <color name>   :black, red, green, yellow, blue, magenta, cyan, white
 
     Example:
-    $script_name -e nano -b "#1c1c23" -i feh -f exiftool -m mediainfo
+    $script_name -e nano -i feh -f exiftool -m mediainfo
 USAGE
     exit 1
 }
@@ -58,16 +56,14 @@ USAGE
 [[ $1 =~ -h|--help ]] && _usage
 
 # Parsing command-line options
-while getopts "b:e:f:i:m:o:p:s:" opt; do
+while getopts "e:f:i:m:o:p:" opt; do
     case $opt in
-        b) BACKGROUND="${OPTARG}" ;;
         e) FZFM_EDITOR="$OPTARG" ;;
         f) FILE_INFO="$OPTARG" ;;
         i) IMAGE_VIEWER="$OPTARG" ;;
         m) MEDIA_INFO="$OPTARG" ;;
         o) OPEN_ANY="$OPTARG" ;;
         p) MEDIA_PLAYER="$OPTARG" ;;
-        s) SEL_BACKGROUND="${OPTARG}" ;;
         *) _usage ;;
     esac
 done
