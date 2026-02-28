@@ -1,0 +1,362 @@
+#!/usr/bin/env bash
+#
+# Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
+# Script name: fzfm
+# License: GPLv2
+#
+# A simple terminal file manager using fzf.
+# Navigate directories with fzf selection previews update dynamically.
+# Dependencies: bat, chafa and tree for previews and programs determined in ~/.config/fzfm/fzfmrc
+# Press Ctrl-C or ESC in fzf to exit.
+
+# shellcheck disable=SC2154
+# shellcheck source=/dev/null
+
+version="v0.1.9"
+
+# Needed if your shell isn't bash,
+# this will set the bash shell only in the terminal session.
+export SHELL="/bin/bash"
+shopt -s checkwinsize
+
+script_name=$(basename "$0")
+config_dir="$HOME/.config/fzfm"
+config="$config_dir/fzfmrc"
+ascii_file="$config_dir/fzfm_ascii"
+
+source "$config"
+
+echo -ne "\e[8;${LINES};${COLUMNS}t"
+
+_usage() {
+    tput clear
+    echo
+    cat <<- USAGE
+    =========================================================================
+    A TERMINAL BASED SIMPLE FILEMANAGER USING FZF WITH BASIC EXPECTED OPTIONS
+    =========================================================================
+    If no option provided then $script_name uses $config
+    Press Ctrl-C or ESC to exit.
+
+    Available options:
+    -b <"#XXXXXX">    :Set the terminal background in hexadecimal color.
+    -b <color name>   :black, red, green, yellow, blue, magenta, cyan, white
+    -e <editor>       :Set your editor for editing files.
+    -f <program>      :Set a program to get infos from selected file.
+    -h|--help         :Print this message and exit.
+    -i <image viewer> :Set a program to open image files.
+    -m <program>      :Set a program to get infos from selected media file.
+    -o <true/false>   :Allow or not your editor to open whatever selected file is.
+    -p <player>       :Set a program to play selected media file.
+    -s <"#XXXXXX">    :Set the highlighted item background in hexadecimal color.
+    -s <color name>   :black, red, green, yellow, blue, magenta, cyan, white
+
+    Example:
+    $script_name -e nano -b "#1c1c23" -i feh -f exiftool -m mediainfo
+USAGE
+    exit 1
+}
+
+[[ $1 =~ -h|--help ]] && _usage
+
+# Parsing command-line options
+while getopts "b:e:f:i:m:o:p:s:" opt; do
+    case $opt in
+        b) BACKGROUND="${OPTARG}" ;;
+        e) FZFM_EDITOR="$OPTARG" ;;
+        f) FILE_INFO="$OPTARG" ;;
+        i) IMAGE_VIEWER="$OPTARG" ;;
+        m) MEDIA_INFO="$OPTARG" ;;
+        o) OPEN_ANY="$OPTARG" ;;
+        p) MEDIA_PLAYER="$OPTARG" ;;
+        s) SEL_BACKGROUND="${OPTARG}" ;;
+        *) _usage ;;
+    esac
+done
+
+shift $(( OPTIND - 1 ))
+
+# default colors if not set
+: "${BACKGROUND:="#000000"}"
+: "${SEL_BACKGROUND:="#000000"}"
+: "${POINTER:="#990900"}"
+
+# shell color syntax for prompts
+red=$'\e[31m'
+grn=$'\e[32m'
+ylw=$'\e[33m'
+noc=$'\e[0m'
+
+declare -a copy_buffer=()
+source_file=""
+
+# Ensure required tools are installed
+declare -a packages=(
+    bat chafa "$FILE_INFO" fzf stat tree
+    "$MEDIA_INFO" "$IMAGE_VIEWER" "$FZFM_EDITOR"
+)
+
+for pkg in "${packages[@]}"; do
+    command -v "$pkg" >/dev/null || {
+        echo "$pkg is needed but not installed, exiting..."
+        exit 127
+    }
+done
+
+declare -a dotdotadvice=(
+    "YOU ARE IN THE HIGHEST DIRECTORY, HITTING '..' IS USELESS."
+    "Hit enter on .. to go up a directotry (same as cd ..)"
+)
+
+_mediaPlayer() {
+    local media_file=$1
+    # Media player should run outside of the menu (detatched from the terminal),
+    # so that we stay in the menu if we want to navigate around.
+    __terminateMediaPlayer() {
+        killall --quiet "$MEDIA_PLAYER"
+        return 0
+    }
+
+    if [[ $MEDIA_PLAYER == 'mpv' ]]; then
+        __terminateMediaPlayer && mpv "${mpvOptions[@]}" --no-terminal "$media_file" &
+    else
+        # Other media players may use the command line too...
+        __terminateMediaPlayer && "$MEDIA_PLAYER" "$media_file" &
+    fi
+    tput clear
+}
+
+# Main loop for navigation
+while true; do
+    source "$config"
+    echo -ne "\e[8;${LINES};${COLUMNS}t"
+    mapfile -t marker < <(echo "$BACKGROUND")
+
+    export FZF_DEFAULT_OPTS="
+        --bind ctrl-a:toggle-all,ctrl-z:deselect
+        --bind ctrl-f:first,ctrl-l:last,f12:accept
+        --bind ctrl-d:accept,ctrl-e:accept,ctrl-h:accept,ctrl-p:accept
+        --bind ctrl-r:accept,ctrl-t:accept,ctrl-x:accept,ctrl-y:accept
+        --border-label-pos=5:bottom
+        --border=rounded
+        --color 'bg:$BACKGROUND,bg+:$SEL_BACKGROUND,marker:${marker[*]//[0-9]/a}'
+        --color 'border:cyan,pointer:$POINTER'
+        --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:cyan'
+        --cycle
+        --header-border=rounded
+        --header-label ' file perms '
+        --header-label-pos=top
+        --info=inline-right
+        --input-border=rounded
+        --input-label ' filter box '
+        --input-label-pos=top
+        --height 100%
+        --list-border=rounded
+        --list-label-pos=top
+        --multi
+        --preview-window=right:65%
+        --pointer '|>'
+        --reverse
+        --scroll-off=5
+    "
+    # fzf preview: bat/chafa/exiftool/mediainfo for files, tree for directories
+    if [[ $(pwd) == '/' ]]; then
+        export current_dir=${PWD}
+    else
+        export current_dir=${PWD##*/}
+    fi
+
+    selection=$(
+        command ls -a --group-directories-first | grep -v '^.$' \
+        | fzf --preview="
+            if [[ $(pwd) == '/' && {} == '..' ]]; then
+                echo -e ${red}'\n          ${dotdotadvice[0]}\n'${noc}
+                head -28 $ascii_file
+            elif [[ {} == '..' ]]; then
+                echo -e ${ylw}'\n          ${dotdotadvice[1]}\n'${noc}
+                head -28 $ascii_file
+            elif [[ -d {} ]]; then
+                tree -C {} | head -200
+            elif [[ {} =~ ${IMAGE_EXTS}$ ]]; then
+                chafa --colors 240 --color-space din99d \
+                --size=\"\$FZF_PREVIEW_COLUMNS\"x\"\$FZF_PREVIEW_LINES\" {}
+            elif [[ {} =~ ${MEDIA_EXTS}$ ]]; then
+                $MEDIA_INFO {}
+            elif [[ {} =~ ${OTHER_EXTS}$ || {} =~ ${PLSTS_EXTS}$ ]]; then
+                $FILE_INFO {}
+            else
+                bat --wrap=never --color=always --style=numbers --line-range :500 {}
+            fi" \
+            --bind "focus:transform-header:stat -c %A {}" \
+            --border-label="${grn}[ fzfm $version ]${noc}" \
+            --expect=f12,ctrl-d,ctrl-e,ctrl-h,ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x \
+            --list-label " Current dir: ${current_dir} "
+    )
+
+    # If nothing selected (ESC or Ctrl-C), exit the loop
+    [[ -z $selection ]] && break
+
+    mapfile -t fzf_output <<< "$selection"
+    key="${fzf_output[0]}"
+    selection="${fzf_output[1]}"
+
+    case $key in
+        f12) "$FZFM_EDITOR" "$config"; continue ;;
+        ctrl-d)
+            tput clear
+            # Get all selected items except ctrl-d
+            selected_items=("${fzf_output[@]:1}")
+            [[ ${fzf_output[1]} == ".." ]] && continue
+            printf '\n%s\n' " ${red}Selected item(s) to remove:${noc}"
+            printf '%s\n' "${selected_items[@]}"
+            read -r -p " ${red}Remove these ${#selected_items[@]} items? [y/N]: ${noc}" remove
+            case $remove in
+                [yY]) rm -rf "${selected_items[@]}" ;;
+                *) : ;;
+            esac
+            continue
+        ;;
+        ctrl-e)
+            tput clear
+            if [[ $selection =~ ${EDITOR_EXTS}$ || $OPEN_ANY == "true" ]]; then
+                "$FZFM_EDITOR" "$selection"
+            else
+                printf '\n'
+                read -r -p " ${red}Edit ${selection} with? ${noc}" alt_editor
+                [[ ${alt_editor+x} ]] && "$alt_editor" "$selection" &
+            fi
+            unset alt_editor
+            continue
+        ;;
+        ctrl-h)
+            [[ $selection != "/home/$USER" ]] && {
+                cd /home/"$USER" || return 1
+            }
+            continue
+        ;;
+        ctrl-p)
+            tput clear
+            printf '\n'
+            (( ${#copy_buffer[@]} == 0 )) && {
+                echo " ${red}Nothing to paste. Use copy first.${noc}" >&2
+                sleep 2
+                continue
+            }
+            for source in "${copy_buffer[@]}"; do
+                base=$(basename "$source")
+                dest="$(pwd)/$base"
+                if [[ $source == "$dest" ]]; then
+                    cp -a -- "$source" "${dest}_"
+                else
+                    cp -a -- "$source" "$dest"
+                fi
+            done
+            continue
+        ;;
+        ctrl-r)
+            tput clear
+            source_file="$selection"
+            printf '\n'
+            read -r -p " ${grn}Rename ${source_file##*/} to: ${noc}" new_name
+            [[ -z ${new_name} ]] && {
+                echo " ${red}${source_file##*/} has not been renamed.${noc}"
+                sleep 2
+                continue
+            }
+            mv -f -- "${source_file}" "${new_name}"
+            continue
+        ;;
+        ctrl-t)
+            __editNewFile() {
+                read -r -p " ${grn}Edit ${new_file}? [Y/n]: ${noc}" edit
+                [[ $edit =~ [yY] ]] && "$FZFM_EDITOR" "$new_file"
+                unset edit new_file
+            }
+            tput clear
+            printf '\n%s\n' " (${grn}Use filename/ to create a directory)"
+            read -r -p " Enter the new filename: ${noc}" new_file
+            if [[ -z ${new_file} ]]; then
+                echo " ${red}No filename provided.${noc}"
+                sleep 2
+            elif [[ $new_file =~ .+\/$ ]]; then
+                new_dir="$new_file"
+                mkdir -p "${new_dir}"
+            elif [[ $new_file =~ .+\/.+ ]]; then
+                IFS="/"; read -r new_dir new_file <<< "$new_file"
+                mkdir -p "${new_dir}" && touch "$new_dir/$new_file"
+                [[ -f $new_dir/$new_file ]] && __editNewFile
+                unset IFS
+            else
+                touch -- "${new_file}"
+                __editNewFile
+            fi
+            continue
+        ;;
+        ctrl-y)
+            # Get all selected items
+            selected_items=("${fzf_output[@]:1}")
+            copy_buffer=()
+            for item in "${selected_items[@]}"; do
+                copy_buffer+=("$PWD/$item")
+            done
+            continue
+        ;;
+        ctrl-x)
+            tput clear
+            source_file="$PWD/$selection"
+            printf '\n'
+            read -r -p " ${grn}Move ${source_file##*/} to (path): ${noc}" destination
+            [[ -z ${destination} ]] && {
+                echo " ${red}No destination provided for ${source_file##*/}...${noc}"
+                sleep 3
+                continue
+            }
+            # Expanding leading tilde ~
+            destination="${destination/#~/$HOME}"
+            mv -f -- "${source_file}" "$destination/${source_file##*/}"
+            continue
+        ;;
+        *) : ;;
+    esac
+
+    # Opening selected folder/file
+    if [[ -d $selection ]]; then
+        cd "$selection" || continue
+    else
+        if [[ $selection =~ ${IMAGE_EXTS}$ ]]; then
+            "$IMAGE_VIEWER" "$selection" &
+        elif [[ $selection =~ ${MEDIA_EXTS}$ ]]; then
+            _mediaPlayer "$selection"
+        elif [[ $selection =~ ${EDITOR_EXTS}$ || $OPEN_ANY == "true" ]]; then
+            "$FZFM_EDITOR" "$selection"
+        elif [[ $selection =~ ${OTHER_EXTS}$ ]]; then
+            tput clear
+            printf '\n'
+            read -r -p " ${grn}Open $selection with?: " program
+            case $program in
+                deadbeef|ffplay|mpv|vlc)
+                    _mediaPlayer "$selection"
+                ;;
+                *)
+                    "$program" "$selection" || {
+                        tput clear
+                        echo -e "\n ${red}Unable to open $selection.${noc}"
+                        sleep 2
+                        continue
+                    }
+                ;;
+            esac
+        else
+            tput clear
+            printf '\n'
+            read -r -p " ${red}Edit ${selection}? [N/y]: ${noc}" edit
+            [[ $edit =~ [yY] ]] && "$FZFM_EDITOR" "$selection"
+            unset edit
+            continue
+        fi
+    fi
+done
+
+unset current_dir
+export FZF_DEFAULT_OPTS=
+tput clear

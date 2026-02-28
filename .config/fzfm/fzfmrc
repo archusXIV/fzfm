@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# ~/.config/fzfm/fzfmrc
+#
+#   $$$$$$$$\  $$$$$$$$\  $$$$$$$$\  $$\      $$\
+#   $$  _____| \____$$  | $$  _____| $$$\    $$$ |
+#   $$ |           $$  /  $$ |       $$$$\  $$$$ |
+#   $$$$$\        $$  /   $$$$$\     $$\$$\$$ $$ |
+#   $$  __|      $$  /    $$  __|    $$ \$$$  $$ |
+#   $$ |        $$  /     $$ |       $$ |\$  /$$ |
+#   $$ |       $$$$$$$$\  $$ |       $$ | \_/ $$ |
+#   \__|       \________| \__|       \__|     \__|
+#                           SIMPLE FZF FILEMANAGER
+#
+# shellcheck disable=SC2034
+
+# terminal size (minimun LINES=35 to display all shortcuts)
+LINES=35
+COLUMNS=129
+
+############### FZF COLORS ###############
+# hexadecimal color or name: (black,red,green,yellow,blue,magenta,cyan,white)
+# if unset, "#000000" will be used
+# or use ~/.Xresources colors
+# BACKGROUND=$(xrdb -query | awk '/color0:/{print $NF}')
+BACKGROUND="#1c1c23"
+# same thing for SEL_BACKGROUND
+SEL_BACKGROUND=
+# if unset, "#990900" will be used
+POINTER=yellow
+
+################# TOOLS #################
+# terminal text editor (opens within fzfm)
+FZFM_EDITOR=${VISUAL:-vim}
+IMAGE_VIEWER=sxiv
+FILE_INFO=exiftool
+MEDIA_INFO=mediainfo
+MEDIA_PLAYER=mpv
+
+############ FILE EXTENSIONS ############
+EDITOR_EXTS="(.conf|.ini|.html|.json|.lua|.log|.md|.py|.sh|.toml|.txt|.xml)"
+IMAGE_EXTS="(.bmp|.gif|.jpe?g|.png|.tiff|.webp)"
+MEDIA_EXTS="(.aac|.avi|.flac|.mkv|.mov|.mp[3-4]?|.ogg|.wav|.webm|.wm)"
+PLSTS_EXTS="(.asx|.m3u|.pls|.ra?m|.wpl|.xspf)"
+OTHER_EXTS="(.gz|.iso|.pdf|.rar|.xz|.zip|.zst)"
+# be asked or not before opening $OTHER_EXTS or files without extension
+# true/false
+OPEN_ANY=true
+
+############## MPV OPTIONS ##############
+mpvOptions=(
+    "--no-config" "--idle=once" "--cache=no"
+    "--force-window" "--fullscreen=no"
+)
