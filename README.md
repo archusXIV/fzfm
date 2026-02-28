@@ -34,7 +34,7 @@ FZFM uses a configuration file (~/.config/fzfm/fzfmrc) where customization can b
 - files extensions definition
 - mpv options (if MEDIA_PLAYER=mpv)
 
-When copying/pasting in the same directory, the new one will be named with an underscore
+When copying/pasting in the same directory, the new file will be named with an underscore
 - example: my_file -> myfile_ (same as [ranger](https://ranger.fm/) does)
 
 Some prompts may appear when deleting, creating files
