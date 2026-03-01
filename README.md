@@ -37,7 +37,7 @@ FZFM uses a configuration file (~/.config/fzfm/fzfmrc) where customization can b
 When copying/pasting in the same directory, the new file will be named with an underscore
 - example: my_file -> myfile_ (same as [ranger](https://ranger.fm/) does)
 
-Some prompts may appear when deleting, creating files
+Some prompts may appear when deleting, creating files.
 
 ## Dependencies
 - bat: for files preview
