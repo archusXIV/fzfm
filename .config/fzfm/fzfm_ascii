@@ -18,7 +18,7 @@
              CTRL+E: edit a file
              CTRL+F: go to the first line of the list
              CTRL+H: go $HOME
-             CTRL+L: go to the last line of the lits
+             CTRL+L: go to the last line of the list
              CTRL+P: paste your last copied file(s)
              CTRL+R: rename a file
              CTRL+T: create a new file
