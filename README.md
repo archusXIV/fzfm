@@ -28,6 +28,7 @@ A simple customizable fzf file manager for Linux with basic options.
   </tr>
 </table>
 
+## Features
 FZFM uses a configuration file (~/.config/fzfm/fzfmrc) where customization can be done:
 - colors
 - default programs
