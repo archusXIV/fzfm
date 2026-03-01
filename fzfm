@@ -23,7 +23,13 @@ script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
 ascii_file="$config_dir/fzfm_ascii"
-source "$config"
+
+if [[ -f $config ]]; then
+    source "$config"
+else
+    printf '%s\n' " $config does not exist"
+    exit 1
+fi
 
 _usage() {
     tput clear
@@ -112,13 +118,16 @@ _mediaPlayer() {
 
 # Main loop for navigation
 while true; do
+
     : "${LINES:=35}"
     : "${COLUMNS:=130}"
-    echo -ne "\e[8;${LINES};${COLUMNS}t"
     : "${BACKGROUND:="#000000"}"
     : "${SEL_BACKGROUND:="#000000"}"
     : "${POINTER:="#990900"}"
+    echo -ne "\e[8;${LINES};${COLUMNS}t"
+
     mapfile -t marker <<< "$BACKGROUND"
+
     export FZF_DEFAULT_OPTS="
         --bind ctrl-a:toggle-all,ctrl-z:deselect
         --bind ctrl-f:first,ctrl-l:last,f12:accept
@@ -146,6 +155,7 @@ while true; do
         --reverse
         --scroll-off=5
     "
+
     # fzf preview: bat/chafa/exiftool/mediainfo for files, tree for directories
     if [[ $(pwd) == '/' ]]; then
         export current_dir=${PWD}
@@ -256,8 +266,12 @@ while true; do
         ctrl-t)
             __editNewFile() {
                 read -r -p " ${grn}Edit ${new_file}? [Y/n]: ${noc}" edit
-                [[ $edit =~ [yY] ]] && "$FZFM_EDITOR" "$new_file"
-                unset edit new_file
+                if [[ $edit =~ [yY] && -f $new_dir/$new_file ]]; then
+                    "$FZFM_EDITOR" "$new_dir/$new_file"
+                elif [[ $edit =~ [yY] && ! -d $new_file ]]; then
+                    "$FZFM_EDITOR" "$new_file"
+                fi
+                unset edit new_dir new_file
             }
             tput clear
             printf '\n%s\n' " (${grn}Use filename/ to create a directory)"
@@ -273,6 +287,9 @@ while true; do
                 mkdir -p "${new_dir}" && touch "$new_dir/$new_file"
                 [[ -f $new_dir/$new_file ]] && __editNewFile
                 unset IFS
+            elif [[ -f $new_file || -d $new_file ]]; then
+                touch -- "${new_file}"_ && new_file="${new_file}"_
+                __editNewFile
             else
                 touch -- "${new_file}"
                 __editNewFile
@@ -342,6 +359,7 @@ while true; do
             continue
         fi
     fi
+
 done
 
 unset current_dir
