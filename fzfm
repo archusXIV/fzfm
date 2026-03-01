@@ -12,7 +12,7 @@
 # shellcheck disable=SC2154
 # shellcheck source=/dev/null
 
-version="v0.1.9"
+version="v0.2.0"
 
 # Needed if your shell isn't bash,
 # this will set the bash shell only in the terminal session.
@@ -24,10 +24,16 @@ config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
 ascii_file="$config_dir/fzfm_ascii"
 
+# shell color syntax for prompts
+red=$'\e[31m'
+grn=$'\e[32m'
+ylw=$'\e[33m'
+noc=$'\e[0m'
+
 if [[ -f $config ]]; then
     source "$config"
 else
-    printf '%s\n' " $config does not exist"
+    printf '%s\n' " ${red}$config does not exist.${noc}"
     exit 1
 fi
 
@@ -70,12 +76,6 @@ while getopts "e:f:i:m:p:" opt; do
 done
 
 shift $(( OPTIND - 1 ))
-
-# shell color syntax for prompts
-red=$'\e[31m'
-grn=$'\e[32m'
-ylw=$'\e[33m'
-noc=$'\e[0m'
 
 declare -a copy_buffer=()
 source_file=""
@@ -208,8 +208,11 @@ while true; do
             printf '%s\n' "${selected_items[@]}"
             read -r -p " ${red}Remove these ${#selected_items[@]} items? [y/N]: ${noc}" remove
             case $remove in
-                [yY]) rm -rf "${selected_items[@]}" ;;
-                *) : ;;
+                [yY])
+                    rm -rf "${selected_items[@]}"
+                    unset selected_items
+                ;;
+                *) unset selected_items ;;
             esac
             continue
         ;;
@@ -232,10 +235,9 @@ while true; do
             continue
         ;;
         ctrl-p)
-            tput clear
-            printf '\n'
             (( ${#copy_buffer[@]} == 0 )) && {
-                echo " ${red}Nothing to paste. Use copy first.${noc}" >&2
+                tput clear
+                echo -e "\n ${red}Nothing to paste. Use copy first.${noc}" >&2
                 sleep 2
                 continue
             }
@@ -271,7 +273,7 @@ while true; do
                 elif [[ $edit =~ [yY] && ! -d $new_file ]]; then
                     "$FZFM_EDITOR" "$new_file"
                 fi
-                unset edit new_dir new_file
+                unset edit new_dir new_file IFS
             }
             tput clear
             printf '\n%s\n' " (${grn}Use filename/ to create a directory)"
@@ -286,7 +288,6 @@ while true; do
                 IFS="/"; read -r new_dir new_file <<< "$new_file"
                 mkdir -p "${new_dir}" && touch "$new_dir/$new_file"
                 [[ -f $new_dir/$new_file ]] && __editNewFile
-                unset IFS
             elif [[ -f $new_file || -d $new_file ]]; then
                 touch -- "${new_file}"_ && new_file="${new_file}"_
                 __editNewFile
@@ -298,9 +299,8 @@ while true; do
         ;;
         ctrl-y)
             # Get all selected items
-            selected_items=("${fzf_output[@]:1}")
             copy_buffer=()
-            for item in "${selected_items[@]}"; do
+            for item in "${fzf_output[@]:1}"; do
                 copy_buffer+=("$PWD/$item")
             done
             continue
@@ -325,40 +325,38 @@ while true; do
 
     # Opening selected folder/file
     if [[ -d $selection ]]; then
-        cd "$selection" || continue
+        cd "$selection" || return 1
+    elif [[ $selection =~ ${IMAGE_EXTS}$ ]]; then
+        "$IMAGE_VIEWER" "$selection" &
+    elif [[ $selection =~ ${MEDIA_EXTS}$ ]]; then
+        _mediaPlayer "$selection"
+    elif [[ $selection =~ ${EDITOR_EXTS}$ || $OPEN_ANY == "true" ]]; then
+        "$FZFM_EDITOR" "$selection"
+    elif [[ $selection =~ ${OTHER_EXTS}$ || $OPEN_ANY == "true" ]]; then
+        tput clear
+        printf '\n'
+        read -r -p " ${grn}Open $selection with?: " program
+        case $program in
+            deadbeef|ffplay|mpv|vlc)
+                _mediaPlayer "$selection"
+            ;;
+            *)
+                "$program" "$selection" || {
+                    tput clear
+                    echo -e "\n ${red}Unable to open $selection.${noc}"
+                    sleep 2
+                    continue
+                }
+            ;;
+        esac
     else
-        if [[ $selection =~ ${IMAGE_EXTS}$ ]]; then
-            "$IMAGE_VIEWER" "$selection" &
-        elif [[ $selection =~ ${MEDIA_EXTS}$ ]]; then
-            _mediaPlayer "$selection"
-        elif [[ $selection =~ ${EDITOR_EXTS}$ || $OPEN_ANY == "true" ]]; then
-            "$FZFM_EDITOR" "$selection"
-        elif [[ $selection =~ ${OTHER_EXTS}$ ]]; then
-            tput clear
-            printf '\n'
-            read -r -p " ${grn}Open $selection with?: " program
-            case $program in
-                deadbeef|ffplay|mpv|vlc)
-                    _mediaPlayer "$selection"
-                ;;
-                *)
-                    "$program" "$selection" || {
-                        tput clear
-                        echo -e "\n ${red}Unable to open $selection.${noc}"
-                        sleep 2
-                        continue
-                    }
-                ;;
-            esac
-        else
-            tput clear
-            printf '\n'
-            read -r -p " ${red}Edit ${selection}? [N/y]: ${noc}" edit
-            [[ $edit =~ [yY] ]] && "$FZFM_EDITOR" "$selection"
-            unset edit
-            continue
-        fi
+        tput clear
+        printf '\n'
+        read -r -p " ${red}Edit ${selection}? [N/y]: ${noc}" edit
+        [[ $edit =~ [yY] ]] && "$FZFM_EDITOR" "$selection"
+        unset edit
     fi
+    continue
 
 done
 
