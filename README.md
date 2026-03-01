@@ -1,6 +1,10 @@
 # fzfm
 A simple customizable fzf file manager for Linux with basic options.
 
+## On YouTube
+[fzfm a simple fzf file manager](https://www.youtube.com/watch?v=kMWA8doDBkw)
+
+
 <table width="100%">
   <tr>
     <th>main</th>
