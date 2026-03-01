@@ -40,7 +40,7 @@ MEDIA_PLAYER=mpv
 ############ FILE EXTENSIONS ############
 EDITOR_EXTS="(.conf|.ini|.html|.json|.lua|.log|.md|.py|.sh|.toml|.txt|.xml)"
 IMAGE_EXTS="(.bmp|.gif|.jpe?g|.png|.tiff|.webp)"
-MEDIA_EXTS="(.aac|.avi|.flac|.mkv|.mov|.mp[3-4]?|.ogg|.wav|.webm|.wm)"
+MEDIA_EXTS="(.aac|.avi|.flac|.mkv|.mov|.mp[3-4]?|.ogg|.wav|.webm|.wmv)"
 PLSTS_EXTS="(.asx|.m3u|.pls|.ra?m|.wpl|.xspf)"
 OTHER_EXTS="(.gz|.iso|.pdf|.rar|.xz|.zip|.zst)"
 # be asked or not before opening $OTHER_EXTS or files without extension
