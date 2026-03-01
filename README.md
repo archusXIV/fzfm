@@ -52,7 +52,9 @@ git clone https://github.com/archusXIV/fzfm.git
 cd fzfm
 mkdir -p ~/.config/fzfm/
 cp -r .config/fzfm/ ~/.config/fzfm/
+chmod +x ./fzfm
 ```
+Move fzfm script in your $PATH
 
 ## Keyboard shortcuts
 
