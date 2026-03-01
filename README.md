@@ -1,5 +1,5 @@
 # fzfm
-A simple fzf file manager for Linux
+A simple customizable fzf file manager for Linux with basic options.
 
 <table width="100%">
   <tr>
