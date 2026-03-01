@@ -44,6 +44,26 @@ When copying/pasting in the same directory, the new file will be named with an u
 
 Some prompts may appear when deleting, creating files.
 
+## Command line usage
+```bash
+=========================================================================
+A TERMINAL BASED SIMPLE FILEMANAGER USING FZF WITH BASIC EXPECTED OPTIONS
+=========================================================================
+If no option provided then fzfm uses ~/.config/fzfm/fzfmrc
+Press Ctrl-C or ESC to exit.
+
+Available options:
+-e <editor>       :Set your editor for editing files (default:vim).
+-f <program>      :Set a program to get infos from selected file (default:exiftool).
+-h|--help         :Print this message and exit.
+-i <image viewer> :Set a program to open image files (default:sxiv).
+-m <program>      :Set a program to get infos from selected media file (default:mediainfo).
+-p <player>       :Set a program to play selected media file (default:mpv).
+
+Example:
+fzfm -e nano -i feh -f exiftool -m mediainfo
+```
+
 ## Dependencies
 - bat: for files preview
 - chafa: for images preview
