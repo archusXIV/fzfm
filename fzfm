@@ -12,7 +12,7 @@
 # shellcheck disable=SC2154
 # shellcheck source=/dev/null
 
-version="v0.2.0"
+version="v0.2.1"
 
 # Needed if your shell isn't bash,
 # this will set the bash shell only in the terminal session.
@@ -140,7 +140,7 @@ while true; do
         --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:cyan'
         --cycle
         --header-border=rounded
-        --header-label ' file perms '
+        --header-label ' selected file perms '
         --header-label-pos=top
         --info=inline-right
         --input-border=rounded
@@ -276,8 +276,10 @@ while true; do
                 unset edit new_dir new_file IFS
             }
             tput clear
-            printf '\n%s\n' " (${grn}Use filename/ to create a directory)"
-            read -r -p " Enter the new filename: ${noc}" new_file
+            printf '\n'
+            printf '%s\n' " ${grn}Use dirname/ to create a directory," \
+            " file1,file2 (comma separated) for multiple files."
+            read -r -p " or simply: my_filename: ${noc}" new_file
             if [[ -z ${new_file} ]]; then
                 echo " ${red}No filename provided.${noc}"
                 sleep 2
@@ -288,6 +290,12 @@ while true; do
                 IFS="/"; read -r new_dir new_file <<< "$new_file"
                 mkdir -p "${new_dir}" && touch "$new_dir/$new_file"
                 [[ -f $new_dir/$new_file ]] && __editNewFile
+            elif [[ $new_file =~ , ]]; then
+                IFS=","; read -r -a new_files <<< "$new_file"
+                for new_file in "${new_files[@]}"; do
+                    touch "$new_file"
+                done
+                unset IFS new_file new_files
             elif [[ -f $new_file || -d $new_file ]]; then
                 touch -- "${new_file}"_ && new_file="${new_file}"_
                 __editNewFile

@@ -43,9 +43,15 @@ When copying/pasting in the same directory, the new file will be named with an u
 - example: my_file -> myfile_ (same as [ranger](https://ranger.fm/) does)
 
 Some prompts may appear when deleting, creating files.
+- To delete a file or folder use ctrl-d (fzf --multi is enabled).
+- To create a directory use ctrl-t then: dir/ or dir/file
+- To create multiple files use ctrl-t then: file1,file2,file3 (comma separated).
+- Or simply: file
+
+If only one file is created you will be asked to edit it.
 
 ## Command line usage
-```bash
+```
 =========================================================================
 A TERMINAL BASED SIMPLE FILEMANAGER USING FZF WITH BASIC EXPECTED OPTIONS
 =========================================================================
@@ -70,6 +76,7 @@ fzfm -e nano -i feh -f exiftool -m mediainfo
 - [fzf](https://github.com/junegunn/fzf) (of course)
 - stat: for file permission display
 - tree: for directories preview
+- And your defined programs in ~/.config/fzfm/fzfmrc
 
 ## Installation
 ```bash
