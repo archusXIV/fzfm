@@ -223,7 +223,7 @@ while true; do
             else
                 printf '\n'
                 read -r -p " ${red}Edit ${selection} with? ${noc}" alt_editor
-                [[ ${alt_editor+x} ]] && "$alt_editor" "$selection" &
+                [[ ${alt_editor+x} ]] && "$alt_editor" "$selection"
             fi
             unset alt_editor
             continue
