@@ -179,7 +179,7 @@ while true; do
                 --size=\"\$FZF_PREVIEW_COLUMNS\"x\"\$FZF_PREVIEW_LINES\" {}
             elif [[ {} =~ ${MEDIA_EXTS}$ ]]; then
                 $MEDIA_INFO {}
-            elif [[ {} =~ ${OTHER_EXTS}$ || {} =~ ${PLSTS_EXTS}$ ]]; then
+            elif [[ {} =~ ${OTHER_EXTS}$ ]]; then
                 $FILE_INFO {}
             else
                 bat --wrap=never --color=always --style=numbers --line-range :500 {}
