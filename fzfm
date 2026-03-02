@@ -328,7 +328,7 @@ while true; do
         cd "$selection" || return 1
     elif [[ $selection =~ ${IMAGE_EXTS}$ ]]; then
         "$IMAGE_VIEWER" "$selection" &
-    elif [[ $selection =~ ${MEDIA_EXTS}$ ]]; then
+    elif [[ $selection =~ ${MEDIA_EXTS}$ || $selection =~ ${PLSTS_EXTS}$ ]]; then
         _mediaPlayer "$selection"
     elif [[ $selection =~ ${EDITOR_EXTS}$ || $OPEN_ANY == "true" ]]; then
         "$FZFM_EDITOR" "$selection"
