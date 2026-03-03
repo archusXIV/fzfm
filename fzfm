@@ -124,6 +124,8 @@ while true; do
     : "${BACKGROUND:="#000000"}"
     : "${SEL_BACKGROUND:="#000000"}"
     : "${POINTER:="#990900"}"
+    : "${PREVIEW_POS:=right}"
+
     echo -ne "\e[8;${LINES};${COLUMNS}t"
 
     mapfile -t marker <<< "$BACKGROUND"
@@ -150,19 +152,19 @@ while true; do
         --list-border=rounded
         --list-label-pos=top
         --multi
-        --preview-window=right:65%
+        --preview-window=$PREVIEW_POS:65%
         --pointer '|>'
         --reverse
         --scroll-off=5
     "
 
-    # fzf preview: bat/chafa/exiftool/mediainfo for files, tree for directories
     if [[ $(pwd) == '/' ]]; then
         export current_dir=${PWD}
     else
         export current_dir=${PWD##*/}
     fi
 
+    # fzf preview: bat/chafa/exiftool/mediainfo for files, tree for directories
     selection=$(
         command ls -a --group-directories-first | grep -v '^.$' \
         | fzf --preview="

@@ -34,7 +34,7 @@ A simple customizable fzf file manager for Linux with basic options.
 
 ## Features
 fzfm can be launched on the command line (try fzfm -h) or uses a configuration file (~/.config/fzfm/fzfmrc) where customization can be done:
-- colors
+- colors (bg,bg+,pointer), preview window position (left,right)
 - default programs
 - files extensions definition
 - mpv options (if MEDIA_PLAYER=mpv)
@@ -99,13 +99,13 @@ Check the config file ([fzfmrc](https://github.com/archusXIV/fzfm/blob/main/.con
 | `ctrl-e` | edit selected file |
 | `ctrl-f` | up to first line |
 | `ctrl-h` | go back $HOME |
-| `ctrl-l` | down to the last line |
+| `ctrl-l` | down to last line |
 | `ctrl-p` | paste previously copied file(s) |
 | `ctrl-r` | rename selected file |
-| `ctrl-t` | create a file or directory |
+| `ctrl-t` | create file(s) or directory |
 | `ctrl-x` | cut (move) selected file(s) |
 | `ctrl-y` | yank selected file(s) |
-| `ctrl-z` | deselect file(s) |
+| `ctrl-z` | deselect item at pointer position |
 | `esc` | exit |
 
 ## Dynamic settings

@@ -18,16 +18,18 @@
 LINES=35
 COLUMNS=129
 
-############### FZF COLORS ###############
+############### FZF OPTIONS ###############
 # hexadecimal color or name: (black,red,green,yellow,blue,magenta,cyan,white)
-# if unset, "#000000" will be used
+# if unset, "#000000" (black) will be used
 # or use ~/.Xresources colors
 # BACKGROUND=$(xrdb -query | awk '/color0:/{print $NF}')
-BACKGROUND="#1c1c23"
+BACKGROUND="#1c1c40"
 # same thing for SEL_BACKGROUND
 SEL_BACKGROUND=
-# if unset, "#990900" will be used
+# if unset, "#990900" (red) will be used
 POINTER=yellow
+# left/right, if unset then default=right
+PREVIEW_POS=right
 
 ################# TOOLS #################
 # terminal text editor (opens within fzfm)
