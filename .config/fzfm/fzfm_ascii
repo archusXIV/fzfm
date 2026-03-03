@@ -21,8 +21,8 @@
              CTRL+L: go to the last line of the list
              CTRL+P: paste your last copied file(s)
              CTRL+R: rename a file
-             CTRL+T: create a new file
-             CTRL+X: cut (move) a file
+             CTRL+T: create new file(s) or a single folder
+             CTRL+X: cut (move) a file or more
              CTRL+Y: yank file(s)
              ESCAPE: exit
 

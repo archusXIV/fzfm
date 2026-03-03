@@ -12,7 +12,7 @@
 # shellcheck disable=SC2154
 # shellcheck source=/dev/null
 
-version="v0.2.1"
+version="v0.2.2"
 
 # Needed if your shell isn't bash,
 # this will set the bash shell only in the terminal session.
@@ -308,7 +308,6 @@ while true; do
             continue
         ;;
         ctrl-y)
-            # Get all selected items
             copy_buffer=()
             for item in "${fzf_output[@]:1}"; do
                 copy_buffer+=("$PWD/$item")
@@ -317,17 +316,34 @@ while true; do
         ;;
         ctrl-x)
             tput clear
-            source_file="$PWD/$selection"
-            printf '\n'
-            read -r -p " ${grn}Move ${source_file##*/} to (path): ${noc}" destination
-            [[ -z ${destination} ]] && {
-                echo " ${red}No destination provided for ${source_file##*/}...${noc}"
-                sleep 3
-                continue
-            }
-            # Expanding leading tilde ~
-            destination="${destination/#~/$HOME}"
-            mv -f -- "${source_file}" "$destination/${source_file##*/}"
+            selected_items=("${fzf_output[@]:1}")
+            if (( ${#selected_items[@]} > 1 )); then
+                # Handle multiple items
+                printf '\n%s\n' " ${grn}Selected items to move:${noc}"
+                printf '%s\n' "${selected_items[@]}"
+                read -r -p " ${grn}Move to (path): ${noc}" destination
+                [[ -z ${destination} ]] && {
+                    echo " ${red}No destination provided...${noc}"
+                    sleep 3
+                    continue
+                }
+                destination="${destination/#~/$HOME}"
+                for item in "${selected_items[@]}"; do
+                    mv -f -- "$PWD/$item" "$destination/$(basename "$item")"
+                done
+            else
+                # Handle single item
+                source_file="$PWD/$selection"
+                printf '\n'
+                read -r -p " ${grn}Move ${source_file##*/} to (path): ${noc}" destination
+                [[ -z ${destination} ]] && {
+                    echo " ${red}No destination provided for ${source_file##*/}...${noc}"
+                    sleep 3
+                    continue
+                }
+                destination="${destination/#~/$HOME}"
+                mv -f -- "${source_file}" "$destination/$(basename "$source_file")"
+            fi
             continue
         ;;
         *) : ;;
