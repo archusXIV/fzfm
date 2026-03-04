@@ -12,7 +12,7 @@
 # shellcheck disable=SC2154
 # shellcheck source=/dev/null
 
-version="v0.2.2"
+version="v0.2.3"
 
 # Needed if your shell isn't bash,
 # this will set the bash shell only in the terminal session.
@@ -275,21 +275,23 @@ while true; do
                 elif [[ $edit =~ [yY] && ! -d $new_file ]]; then
                     "$FZFM_EDITOR" "$new_file"
                 fi
-                unset edit new_dir new_file IFS
+                unset IFS edit new_dir new_file
             }
             tput clear
             printf '\n'
-            printf '%s\n' " ${grn}Use dirname/ to create a directory," \
-            " file1,file2 (comma separated) for multiple files."
+            printf '%s\n' " ${grn}Use dir_name/ to create a directory," \
+            " dir_name1/dir_name2/file_name for multiple subdirectories + one file," \
+            " file_name1,file_name2 (comma separated) for multiple files."
             read -r -p " or simply: my_filename: ${noc}" new_file
             if [[ -z ${new_file} ]]; then
-                echo " ${red}No filename provided.${noc}"
+                echo " ${red}No dirname or filename provided...${noc}"
                 sleep 2
             elif [[ $new_file =~ .+\/$ ]]; then
                 new_dir="$new_file"
                 mkdir -p "${new_dir}"
-            elif [[ $new_file =~ .+\/.+ ]]; then
-                IFS="/"; read -r new_dir new_file <<< "$new_file"
+            elif [[ $new_file =~ .+\/+[[:alnum:]]+$ ]]; then
+                new_dir=$(dirname "$new_file")
+                new_file=$(basename "$new_file")
                 mkdir -p "${new_dir}" && touch "$new_dir/$new_file"
                 [[ -f $new_dir/$new_file ]] && __editNewFile
             elif [[ $new_file =~ , ]]; then
