@@ -44,9 +44,9 @@ When copying/pasting in the same directory, the new file will be named with an u
 
 Some prompts may appear when deleting, creating files.
 - To delete a file or folder use ctrl-d (fzf --multi is enabled).
-- To create a directory use ctrl-t then: dir_name/ or dir_name1/dir_name2/file_name or file_name
+- To create a directory use ctrl-t then: dir_name/ or dir_name1/dir_name2/file_name
 - To create multiple files use ctrl-t then: file1,file2,file3 (comma separated).
-- Or simply: file
+- Or simply: file_name
 
 If only one file is created you will be asked to edit it.
 
