@@ -165,8 +165,6 @@ while true; do
         current_dir=${PWD##*/}
     fi
 
-    disk=$(df -h "$(pwd)" | awk 'NR==2 {print $3"/"$2}')
-
     # fzf preview: bat/chafa/exiftool/mediainfo for files, tree for directories
     selection=$(
         command ls -a --group-directories-first | grep -v '^.$' \
@@ -191,7 +189,7 @@ while true; do
             fi" \
             --bind "focus:transform-header:stat -c %A {}" \
             --border-label="${grn}[ fzfm $version ]${noc}" \
-            --preview-label="${cyn}[ disk: $disk ]${noc}" \
+            --preview-label="${cyn}[ disk: $(df -h "$(pwd)" | awk 'NR==2 {print $3"/"$2}') ]${noc}" \
             --expect=f12,ctrl-d,ctrl-e,ctrl-h,ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x \
             --list-label " Current dir: ${current_dir} "
     )
