@@ -12,7 +12,7 @@ A simple customizable fzf file manager for Linux with basic options.
   </tr>
   <tr>
     <td width="50%">
-      <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_v0.1.9.png" />
+      <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_v0.2.4.png" />
     </td>
     <td width="50%">
       <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_image.png" />
