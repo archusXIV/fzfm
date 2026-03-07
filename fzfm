@@ -12,7 +12,7 @@
 # shellcheck disable=SC2154
 # shellcheck source=/dev/null
 
-version="v0.2.3"
+version="v0.2.4"
 
 # Needed if your shell isn't bash,
 # this will set the bash shell only in the terminal session.
@@ -28,6 +28,7 @@ ascii_file="$config_dir/fzfm_ascii"
 red=$'\e[31m'
 grn=$'\e[32m'
 ylw=$'\e[33m'
+cyn=$'\e[36m'
 noc=$'\e[0m'
 
 if [[ -f $config ]]; then
@@ -158,11 +159,13 @@ while true; do
         --scroll-off=5
     "
 
-    if [[ $(pwd) == '/' ]]; then
-        export current_dir=${PWD}
+    if [[ $(pwd) =~ ^\/$ ]]; then
+        current_dir=${PWD}
     else
-        export current_dir=${PWD##*/}
+        current_dir=${PWD##*/}
     fi
+
+    disk=$(df -h "$(pwd)" | awk 'NR==2 {print $3"/"$2}')
 
     # fzf preview: bat/chafa/exiftool/mediainfo for files, tree for directories
     selection=$(
@@ -188,6 +191,7 @@ while true; do
             fi" \
             --bind "focus:transform-header:stat -c %A {}" \
             --border-label="${grn}[ fzfm $version ]${noc}" \
+            --preview-label="${cyn}[ disk: $disk ]${noc}" \
             --expect=f12,ctrl-d,ctrl-e,ctrl-h,ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x \
             --list-label " Current dir: ${current_dir} "
     )
@@ -205,6 +209,7 @@ while true; do
             tput clear
             # Get all selected items except ctrl-d
             selected_items=("${fzf_output[@]:1}")
+            # Avoiding dotdot to be removed
             [[ ${fzf_output[1]} == ".." ]] && continue
             printf '\n%s\n' " ${red}Selected item(s) to remove:${noc}"
             printf '%s\n' "${selected_items[@]}"
@@ -284,7 +289,7 @@ while true; do
             " file_name1,file_name2 (comma separated) for multiple files."
             read -r -p " or simply: my_filename: ${noc}" new_file
             if [[ -z ${new_file} ]]; then
-                echo " ${red}No dirname or filename provided...${noc}"
+                echo " ${red}No dir_name or file_name provided...${noc}"
                 sleep 2
             elif [[ $new_file =~ .+\/$ ]]; then
                 new_dir="$new_file"
@@ -294,7 +299,7 @@ while true; do
                 new_file=$(basename "$new_file")
                 mkdir -p "${new_dir}" && touch "$new_dir/$new_file"
                 [[ -f $new_dir/$new_file ]] && __editNewFile
-            elif [[ $new_file =~ , ]]; then
+            elif [[ $new_file =~ ,+ ]]; then
                 IFS=","; read -r -a new_files <<< "$new_file"
                 for new_file in "${new_files[@]}"; do
                     touch "$new_file"
@@ -319,31 +324,35 @@ while true; do
         ctrl-x)
             tput clear
             selected_items=("${fzf_output[@]:1}")
-            if (( ${#selected_items[@]} > 1 )); then
-                # Handle multiple items
-                printf '\n%s\n' " ${grn}Selected items to move:${noc}"
-                printf '%s\n' "${selected_items[@]}"
-                read -r -p " ${grn}Move to (path): ${noc}" destination
-                [[ -z ${destination} ]] && {
-                    echo " ${red}No destination provided...${noc}"
-                    sleep 3
-                    continue
-                }
+            __movePrompts() {
+                case $1 in
+                    --multipleItems)
+                        printf '\n%s\n' " ${grn}Selected items to move:${noc}"
+                        printf '%s\n' "${selected_items[@]}"
+                        read -r -p " ${grn}Move to (path): ${noc}" destination
+                    ;;
+                    --singleItem)
+                        printf '\n'
+                        read -r -p " ${grn}Move ${source_file##*/} to (path): ${noc}" destination
+                    ;;
+                    --error)
+                        printf '%s\n' " ${red}No destination provided...${noc}"
+                        sleep 3
+                        continue
+                    ;;
+                esac
                 destination="${destination/#~/$HOME}"
+            }
+            if (( ${#selected_items[@]} > 1 )); then
+                __movePrompts --multipleItems
+                [[ -z ${destination} ]] && __movePrompts --error
                 for item in "${selected_items[@]}"; do
                     mv -f -- "$PWD/$item" "$destination/$(basename "$item")"
                 done
             else
-                # Handle single item
                 source_file="$PWD/$selection"
-                printf '\n'
-                read -r -p " ${grn}Move ${source_file##*/} to (path): ${noc}" destination
-                [[ -z ${destination} ]] && {
-                    echo " ${red}No destination provided for ${source_file##*/}...${noc}"
-                    sleep 3
-                    continue
-                }
-                destination="${destination/#~/$HOME}"
+                __movePrompts --singleItem
+                [[ -z ${destination} ]] && __movePrompts --error
                 mv -f -- "${source_file}" "$destination/$(basename "$source_file")"
             fi
             continue
@@ -369,7 +378,7 @@ while true; do
                 _mediaPlayer "$selection"
             ;;
             *)
-                "$program" "$selection" || {
+                { "$program" "$selection" & } || {
                     tput clear
                     echo -e "\n ${red}Unable to open $selection.${noc}"
                     sleep 2
