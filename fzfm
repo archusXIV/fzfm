@@ -7,12 +7,13 @@
 # A simple terminal file manager using fzf.
 # Navigate directories with fzf selection previews update dynamically.
 # Dependencies: bat, chafa and tree for previews and programs determined in ~/.config/fzfm/fzfmrc
+# Make sure to have at least fzf 0.35.0 for the --color option in the preview window.
 # Press Ctrl-C or ESC in fzf to exit.
 
 # shellcheck disable=SC2154
 # shellcheck source=/dev/null
 
-version="v0.2.4"
+version="v0.2.5"
 
 # Needed if your shell isn't bash,
 # this will set the bash shell only in the terminal session.
@@ -20,16 +21,18 @@ export SHELL="/bin/bash"
 shopt -s checkwinsize
 
 script_name=$(basename "$0")
-config_dir="$HOME/.config/fzfm"
-config="$config_dir/fzfmrc"
-ascii_file="$config_dir/fzfm_ascii"
+config="$HOME/.config/fzfm/fzfmrc"
+ascii_file="$HOME/.config/fzfm/fzfm_ascii"
+book_marks="$HOME/.config/fzfm/fzfm_bookmarks"
 
-# shell color syntax for prompts
+# shell syntax for prompts
 red=$'\e[31m'
 grn=$'\e[32m'
 ylw=$'\e[33m'
 cyn=$'\e[36m'
 noc=$'\e[0m'
+bold=$'\e[1m'
+nobold=$'\e[21m'
 
 if [[ -f $config ]]; then
     source "$config"
@@ -57,7 +60,7 @@ _usage() {
     -p <player>       :Set a program to play selected media file (default:mpv).
 
     Example:
-    $script_name -e nano -i feh -f exiftool -m mediainfo
+    $script_name -e nano -i feh -f exiftool -m mediainfo -p vlc
 USAGE
     exit 1
 }
@@ -81,15 +84,24 @@ shift $(( OPTIND - 1 ))
 declare -a copy_buffer=()
 source_file=""
 
-# Ensure required tools are installed
-declare -a packages=(
-    bat chafa "$FILE_INFO" fzf stat tree
-    "$MEDIA_INFO" "$IMAGE_VIEWER" "$FZFM_EDITOR"
+# Ensure required tools and files are installed
+declare -a deps=(
+    bat chafa df fzf stat tree
+    "$IMAGE_VIEWER" "$FILE_INFO"
+    "$FZFM_EDITOR" "$MEDIA_INFO"
+    "$ascii_file" "$book_marks"
 )
 
-for pkg in "${packages[@]}"; do
-    command -v "$pkg" >/dev/null || {
-        echo "$pkg is needed but not installed, exiting..."
+for dep in "${deps[@]:0:10}"; do
+    command -v "$dep" >/dev/null || {
+        echo "$dep is needed but not installed, exiting..."
+        exit 127
+    }
+done
+
+for dep in "${deps[@]:10:11}"; do
+    [[ ! -f $dep ]] && {
+        echo "${dep##*/} is needed but does not exist, exiting..."
         exit 127
     }
 done
@@ -120,6 +132,7 @@ _mediaPlayer() {
 # Main loop for navigation
 while true; do
 
+    disk=$(df -h "$(pwd)" | awk 'NR==2 {print $3"/"$2}')
     : "${LINES:=35}"
     : "${COLUMNS:=130}"
     : "${BACKGROUND:="#000000"}"
@@ -130,14 +143,16 @@ while true; do
     echo -ne "\e[8;${LINES};${COLUMNS}t"
 
     mapfile -t marker <<< "$BACKGROUND"
+    mapfile -t -s 1 bookmarks < "$book_marks"
 
     export FZF_DEFAULT_OPTS="
         --bind ctrl-a:toggle-all,ctrl-z:deselect
-        --bind ctrl-f:first,ctrl-l:last,f12:accept
+        --bind ctrl-b:accept,ctrl-f:first,ctrl-l:last,f12:accept
         --bind ctrl-d:accept,ctrl-e:accept,ctrl-h:accept,ctrl-p:accept
         --bind ctrl-r:accept,ctrl-t:accept,ctrl-x:accept,ctrl-y:accept
         --border-label-pos=5:bottom
         --border=rounded
+        --border-label='${cyn}[ ${bold}fzfm $version${nobold} ]${noc}'
         --color 'bg:$BACKGROUND,bg+:$SEL_BACKGROUND,marker:${marker[*]//[0-9]/a}'
         --color 'border:cyan,pointer:$POINTER'
         --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:cyan'
@@ -188,9 +203,8 @@ while true; do
                 bat --wrap=never --color=always --style=numbers --line-range :500 {}
             fi" \
             --bind "focus:transform-header:stat -c %A {}" \
-            --border-label="${grn}[ fzfm $version ]${noc}" \
-            --preview-label="${cyn}[ disk: $(df -h "$(pwd)" | awk 'NR==2 {print $3"/"$2}') ]${noc}" \
-            --expect=f12,ctrl-d,ctrl-e,ctrl-h,ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x \
+            --preview-label="${cyn}[ ${bold}disk: $disk${nobold} ]${noc}" \
+            --expect=f12,ctrl-b,ctrl-d,ctrl-e,ctrl-h,ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x \
             --list-label " Current dir: ${current_dir} "
     )
 
@@ -203,6 +217,27 @@ while true; do
 
     case $key in
         f12) "$FZFM_EDITOR" "$config" && source "$config"; continue ;;
+        ctrl-b)
+            selected_bookmark=$(
+                printf '%s\n' "${bookmarks[@]}" | fzf \
+                --prompt='' \
+                --no-multi \
+                --preview-window="$PREVIEW_POS":60% \
+                --color 'list-label:bold:cyan' \
+                --color 'preview-bg:#000000' \
+                --list-label ' bookmarks ' \
+                --preview="
+                    printf '%s\n' ' Tips:' \
+                    ' Bookmarks help you jump to frequently used directories quickly.'\
+                    ' Add/remove bookmarks by editing ~/.config/fzfm/fzfm_bookmarks.' \
+                    ' Press Enter to access the selected bookmark path.'
+                "
+            )
+            selected_bookmark="${selected_bookmark/#~/$HOME}"
+            [[ -z $selected_bookmark ]] && continue
+            [[ -d $selected_bookmark ]] && cd "$selected_bookmark" || return 1
+            continue
+        ;;
         ctrl-d)
             tput clear
             # Get all selected items except ctrl-d

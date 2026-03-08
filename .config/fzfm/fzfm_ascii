@@ -9,11 +9,11 @@
                                      SIMPLE FZF FILEMANAGER
 
              Keyboard shortcuts:
-             (Remember, folders are files too.)
 
              F12: open config (fzfmrc)
              TAB: select, SHIFT+TAB: cancel selection
              CTRL+A then CTRL+Z: select all
+             CTRL+B: open bookmarks menu *
              CTRL+D: delete file(s)
              CTRL+E: edit a file
              CTRL+F: go to the first line of the list
@@ -21,7 +21,7 @@
              CTRL+L: go to the last line of the list
              CTRL+P: paste your last copied file(s)
              CTRL+R: rename a file
-             CTRL+T: create new file(s) or a single folder
+             CTRL+T: create new file(s) or a folder(s)
              CTRL+X: cut (move) a file or more
              CTRL+Y: yank file(s)
              ESCAPE: exit

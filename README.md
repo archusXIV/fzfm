@@ -12,19 +12,19 @@ A simple customizable fzf file manager for Linux with basic options.
   </tr>
   <tr>
     <td width="50%">
-      <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_v0.2.4.png" />
+      <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_v0.2.5.png" />
     </td>
     <td width="50%">
       <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_image.png" />
     </td>
   </tr>
   <tr>
-    <th>media info</th>
+    <th>bookmarks</th>
     <th>tree view</th>
   </tr>
   <tr>
     <td width="50%">
-      <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_media.png" />
+      <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_bookmarks.png" />
     </td>
     <td width="50%">
       <img src="https://github.com/archusXIV/fzfm/blob/main/screenshots/fzfm_tree.png" />
@@ -38,6 +38,7 @@ fzfm can be launched on the command line (try fzfm -h) or uses a configuration f
 - default programs
 - files extensions definition
 - mpv options (if MEDIA_PLAYER=mpv)
+- bookmarks can be defined in ~/.config/fzfm/fzfm_bookmarks
 
 When copying/pasting in the same directory, the new file will be named with an underscore
 - example: my_file -> myfile_ (same as [ranger](https://ranger.fm/) does)
