@@ -96,6 +96,7 @@ Check the config file ([fzfmrc](https://github.com/archusXIV/fzfm/blob/main/.con
 | :--------- | :---------- |
 | `f12` | edit your config |
 | `ctrl-a` | select all |
+| `ctrl-b` | switch to bookmarks menu |
 | `ctrl-d` | delete selected file(s) |
 | `ctrl-e` | edit selected file |
 | `ctrl-f` | up to first line |
