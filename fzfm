@@ -143,7 +143,11 @@ while true; do
     echo -ne "\e[8;${LINES};${COLUMNS}t"
 
     mapfile -t marker <<< "$BACKGROUND"
-    mapfile -t -s 1 bookmarks < "$book_marks"
+
+    while read -r line; do
+        [[ $line =~ '#' ]] && continue
+        bookmarks+=("${line}")
+    done < "${book_marks}"
 
     export FZF_DEFAULT_OPTS="
         --bind ctrl-a:toggle-all,ctrl-z:deselect

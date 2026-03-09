@@ -1,4 +1,6 @@
-# Add your bookmarks here, one per line (do not delete this first line)
+# Add your bookmarks here, one per line
+# You can comment one or more of them
+# so they are not taken into account.
 ~/Documents
 ~/.config/fzfm
 ~/.local/bin
