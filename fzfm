@@ -7,7 +7,6 @@
 # A simple terminal file manager using fzf.
 # Navigate directories with fzf selection previews update dynamically.
 # Dependencies: bat, chafa and tree for previews and programs determined in ~/.config/fzfm/fzfmrc
-# Make sure to have at least fzf 0.35.0 for the --color option in the preview window.
 # Press Ctrl-C or ESC in fzf to exit.
 
 # shellcheck disable=SC2154
@@ -21,9 +20,10 @@ export SHELL="/bin/bash"
 shopt -s checkwinsize
 
 script_name=$(basename "$0")
-config="$HOME/.config/fzfm/fzfmrc"
-ascii_file="$HOME/.config/fzfm/fzfm_ascii"
-book_marks="$HOME/.config/fzfm/fzfm_bookmarks"
+config_dir="$HOME/.config/fzfm"
+config="$config_dir/fzfmrc"
+ascii_file="$config_dir/fzfm_ascii"
+book_marks="$config_dir/fzfm_bookmarks"
 
 # shell syntax for prompts
 red=$'\e[31m'
@@ -145,8 +145,7 @@ while true; do
     mapfile -t marker <<< "$BACKGROUND"
 
     while read -r line; do
-        [[ $line =~ '#' ]] && continue
-        bookmarks+=("${line}")
+        [[ ! $line =~ '#' ]] && bookmarks+=("${line}")
     done < "${book_marks}"
 
     export FZF_DEFAULT_OPTS="
@@ -238,8 +237,9 @@ while true; do
                 "
             )
             selected_bookmark="${selected_bookmark/#~/$HOME}"
-            [[ -z $selected_bookmark ]] && continue
+            [[ -z $selected_bookmark ]] && { unset bookmarks; continue; }
             [[ -d $selected_bookmark ]] && cd "$selected_bookmark" || return 1
+            unset bookmarks
             continue
         ;;
         ctrl-d)
