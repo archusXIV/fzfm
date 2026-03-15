@@ -11,14 +11,12 @@
 
 # shellcheck disable=SC2154
 # shellcheck source=/dev/null
-
-version="v0.2.5"
-
 # Needed if your shell isn't bash,
 # this will set the bash shell only in the terminal session.
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
+version="v0.2.6"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -37,8 +35,8 @@ nobold=$'\e[21m'
 if [[ -f $config ]]; then
     source "$config"
 else
-    printf '%s\n' " ${red}$config does not exist.${noc}"
-    exit 1
+    printf '%s\n' " ${red}$config: no such file or directory.${noc}"
+    exit 127
 fi
 
 _usage() {
@@ -81,9 +79,6 @@ done
 
 shift $(( OPTIND - 1 ))
 
-declare -a copy_buffer=()
-source_file=""
-
 # Ensure required tools and files are installed
 declare -a deps=(
     bat chafa df fzf stat tree
@@ -106,11 +101,6 @@ for dep in "${deps[@]:10:11}"; do
     }
 done
 
-declare -a dotdotadvice=(
-    "YOU ARE IN THE HIGHEST DIRECTORY, HITTING '..' IS USELESS."
-    "Hit enter on .. to go up a directotry (same as cd ..)"
-)
-
 _mediaPlayer() {
     local media_file=$1
     # Media player should run outside of the menu (detatched from the terminal),
@@ -128,6 +118,13 @@ _mediaPlayer() {
     fi
     tput clear
 }
+
+declare -a dotdotadvice=(
+    "YOU ARE IN THE HIGHEST DIRECTORY, HITTING '..' IS USELESS."
+    "Hit enter on .. to go up a directotry (same as cd ..)"
+)
+
+source_file=""
 
 # Main loop for navigation
 while true; do
@@ -226,10 +223,10 @@ while true; do
                 printf '%s\n' "${bookmarks[@]}" | fzf \
                 --prompt='' \
                 --no-multi \
-                --preview-window="$PREVIEW_POS":60% \
                 --color 'list-label:bold:cyan' \
                 --color 'preview-bg:#000000' \
                 --list-label ' bookmarks ' \
+                --preview-window="$PREVIEW_POS":60% \
                 --preview="
                     printf '%s\n' ' Tips:' \
                     ' Bookmarks help you jump to frequently used directories quickly.'\
@@ -269,7 +266,6 @@ while true; do
                 read -r -p " ${red}Edit ${selection} with? ${noc}" alt_editor
                 [[ ${alt_editor+x} ]] && "$alt_editor" "$selection"
             fi
-            unset alt_editor
             continue
         ;;
         ctrl-h)
@@ -352,7 +348,7 @@ while true; do
             continue
         ;;
         ctrl-y)
-            copy_buffer=()
+            declare -a copy_buffer=()
             for item in "${fzf_output[@]:1}"; do
                 copy_buffer+=("$PWD/$item")
             done
@@ -424,7 +420,7 @@ while true; do
             ;;
         esac
     else
-        tput clear
+    tput clear
         printf '\n'
         read -r -p " ${red}Edit ${selection}? [N/y]: ${noc}" edit
         [[ $edit =~ [yY] ]] && "$FZFM_EDITOR" "$selection"
