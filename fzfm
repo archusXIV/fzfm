@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm
+# Script name: fzfm v0.2.7
 # License: GPLv2
 #
-# A simple terminal file manager using fzf.
+# A simple terminal file manager using fzf, with expected functionalities
+# - copy/paste, move, rename, create, edit, delete files
+# - bookmarks support
 # Navigate directories with fzf selection previews update dynamically.
 # Dependencies: bat, chafa and tree for previews and programs determined in ~/.config/fzfm/fzfmrc
 # Press Ctrl-C or ESC in fzf to exit.
@@ -16,7 +18,7 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="v0.2.6"
+version="v0.2.7"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -110,11 +112,15 @@ _mediaPlayer() {
         return 0
     }
 
-    if [[ $MEDIA_PLAYER == 'mpv' ]]; then
-        __terminateMediaPlayer && mpv "${mpvOptions[@]}" --no-terminal "$media_file" &
+    if [[ $MEDIA_PLAYER == 'mpv' ]] && (( ${#fzf_output[@]} > 1 )); then
+        __terminateMediaPlayer && \
+        printf '%s\n' "${fzf_output[@]}" | mpv \
+        --no-terminal "${mpvOptions[@]}" --playlist=-
+    elif [[ $MEDIA_PLAYER == 'mpv' ]]; then
+        __terminateMediaPlayer && mpv --no-terminal "${mpvOptions[@]}" "$media_file"
     else
         # Other media players may use the command line too...
-        __terminateMediaPlayer && "$MEDIA_PLAYER" "$media_file" &
+        __terminateMediaPlayer && "$MEDIA_PLAYER" "$media_file"
     fi
     tput clear
 }
@@ -130,12 +136,21 @@ source_file=""
 while true; do
 
     disk=$(df -h "$(pwd)" | awk 'NR==2 {print $3"/"$2}')
-    : "${LINES:=35}"
+    : "${LINES:=36}"
     : "${COLUMNS:=130}"
     : "${BACKGROUND:="#000000"}"
     : "${SEL_BACKGROUND:="#000000"}"
     : "${POINTER:="#990900"}"
     : "${PREVIEW_POS:=right}"
+
+    # testing what's defined in fzfmrc for preview-window flipping mecanism @line 167
+    if [[ $PREVIEW_POS == 'right' ]]; then
+        right=left
+        left=right
+    else
+        right=right
+        left=left
+    fi
 
     echo -ne "\e[8;${LINES};${COLUMNS}t"
 
@@ -151,6 +166,7 @@ while true; do
         --bind ctrl-b:accept,ctrl-f:first,ctrl-l:last,f12:accept
         --bind ctrl-d:accept,ctrl-e:accept,ctrl-h:accept,ctrl-p:accept
         --bind ctrl-r:accept,ctrl-t:accept,ctrl-x:accept,ctrl-y:accept
+        --bind 'ctrl-w:change-preview-window($right|$left)'
         --border-label-pos=5:bottom
         --border=rounded
         --border-label='${cyn}[ ${bold}fzfm $version${nobold} ]${noc}'
@@ -187,10 +203,10 @@ while true; do
         | fzf --preview="
             if [[ $(pwd) == '/' && {} == '..' ]]; then
                 echo -e ${red}'\n          ${dotdotadvice[0]}\n'${noc}
-                head -28 $ascii_file
+                head -29 $ascii_file
             elif [[ {} == '..' ]]; then
                 echo -e ${ylw}'\n          ${dotdotadvice[1]}\n'${noc}
-                head -28 $ascii_file
+                head -29 $ascii_file
             elif [[ -d {} ]]; then
                 tree -C {} | head -200
             elif [[ {} =~ ${IMAGE_EXTS}$ ]]; then
@@ -397,9 +413,9 @@ while true; do
     if [[ -d $selection ]]; then
         cd "$selection" || return 1
     elif [[ $selection =~ ${IMAGE_EXTS}$ ]]; then
-        "$IMAGE_VIEWER" "$selection" &
+        "$IMAGE_VIEWER" "$selection" & disown
     elif [[ $selection =~ ${MEDIA_EXTS}$ || $selection =~ ${PLSTS_EXTS}$ ]]; then
-        _mediaPlayer "$selection"
+        _mediaPlayer "$selection" & disown
     elif [[ $selection =~ ${EDITOR_EXTS}$ || $OPEN_ANY == "true" ]]; then
         "$FZFM_EDITOR" "$selection"
     elif [[ $selection =~ ${OTHER_EXTS}$ || $OPEN_ANY == "true" ]]; then
@@ -408,7 +424,7 @@ while true; do
         read -r -p " ${grn}Open $selection with?: " program
         case $program in
             deadbeef|ffplay|mpv|vlc)
-                _mediaPlayer "$selection"
+                _mediaPlayer "$selection" & disown
             ;;
             *)
                 { "$program" "$selection" & } || {

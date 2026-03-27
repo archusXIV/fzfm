@@ -15,7 +15,7 @@
 # shellcheck disable=SC2034
 
 # terminal size (minimun LINES=35 to display all shortcuts)
-LINES=35
+LINES=36
 COLUMNS=129
 
 ############### FZF OPTIONS ###############

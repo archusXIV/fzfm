@@ -105,6 +105,7 @@ Check the config file ([fzfmrc](https://github.com/archusXIV/fzfm/blob/main/.con
 | `ctrl-p` | paste previously copied file(s) |
 | `ctrl-r` | rename selected file |
 | `ctrl-t` | create file(s) or directory |
+| `ctrl-w` | flip preview window left/right |
 | `ctrl-x` | cut (move) selected file(s) |
 | `ctrl-y` | yank selected file(s) |
 | `ctrl-z` | deselect item at pointer position |
