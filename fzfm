@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm v0.2.7
+# Script name: fzfm v0.2.8
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities
@@ -14,11 +14,11 @@
 # shellcheck disable=SC2154
 # shellcheck source=/dev/null
 # Needed if your shell isn't bash,
-# this will set the bash shell only in the terminal session.
+# this will set the bash shell only in this terminal session.
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="v0.2.7"
+version="v0.2.8"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -135,7 +135,6 @@ source_file=""
 # Main loop for navigation
 while true; do
 
-    disk=$(df -h "$(pwd)" | awk 'NR==2 {print $3"/"$2}')
     : "${LINES:=36}"
     : "${COLUMNS:=130}"
     : "${BACKGROUND:="#000000"}"
@@ -143,13 +142,13 @@ while true; do
     : "${POINTER:="#990900"}"
     : "${PREVIEW_POS:=right}"
 
-    # testing what's defined in fzfmrc for preview-window flipping mecanism @line 167
+    # testing what's defined in fzfmrc for preview-window flipping mecanism @line 168
     if [[ $PREVIEW_POS == 'right' ]]; then
-        right=left
-        left=right
-    else
         right=right
         left=left
+    else
+        right=left
+        left=right
     fi
 
     echo -ne "\e[8;${LINES};${COLUMNS}t"
@@ -166,7 +165,7 @@ while true; do
         --bind ctrl-b:accept,ctrl-f:first,ctrl-l:last,f12:accept
         --bind ctrl-d:accept,ctrl-e:accept,ctrl-h:accept,ctrl-p:accept
         --bind ctrl-r:accept,ctrl-t:accept,ctrl-x:accept,ctrl-y:accept
-        --bind 'ctrl-w:change-preview-window($right|$left)'
+        --bind 'ctrl-w:change-preview-window($left|$right)'
         --border-label-pos=5:bottom
         --border=rounded
         --border-label='${cyn}[ ${bold}fzfm $version${nobold} ]${noc}'
@@ -197,6 +196,7 @@ while true; do
         current_dir=${PWD##*/}
     fi
 
+    disk=$(df -h "$(pwd)" | awk 'NR==2 {print $3"/"$2}')
     # fzf preview: bat/chafa/exiftool/mediainfo for files, tree for directories
     selection=$(
         command ls -a --group-directories-first | grep -v '^.$' \
@@ -232,6 +232,16 @@ while true; do
     key="${fzf_output[0]}"
     selection="${fzf_output[1]}"
 
+    __dotsAreSelected() {
+        [[ ${fzf_output[1]} == ".." ]] && {
+            printf '\n%s\n' " ${red}'..' are selected, action cancelled.${noc}"
+            sleep 2
+            tput clear
+            unset selected_items
+            copy_buffer=()
+        }
+    }
+
     case $key in
         f12) "$FZFM_EDITOR" "$config" && source "$config"; continue ;;
         ctrl-b)
@@ -260,7 +270,7 @@ while true; do
             # Get all selected items except ctrl-d
             selected_items=("${fzf_output[@]:1}")
             # Avoiding dotdot to be removed
-            [[ ${fzf_output[1]} == ".." ]] && continue
+            __dotsAreSelected && continue
             printf '\n%s\n' " ${red}Selected item(s) to remove:${noc}"
             printf '%s\n' "${selected_items[@]}"
             read -r -p " ${red}Remove these ${#selected_items[@]} items? [y/N]: ${noc}" remove
@@ -364,6 +374,7 @@ while true; do
             continue
         ;;
         ctrl-y)
+            __dotsAreSelected && continue
             declare -a copy_buffer=()
             for item in "${fzf_output[@]:1}"; do
                 copy_buffer+=("$PWD/$item")
@@ -371,6 +382,7 @@ while true; do
             continue
         ;;
         ctrl-x)
+            __dotsAreSelected && continue
             tput clear
             selected_items=("${fzf_output[@]:1}")
             __movePrompts() {
