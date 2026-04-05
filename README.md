@@ -99,9 +99,9 @@ Check the config file ([fzfmrc](https://github.com/archusXIV/fzfm/blob/main/.con
 | `ctrl-b` | switch to bookmarks menu |
 | `ctrl-d` | delete selected file(s) |
 | `ctrl-e` | edit selected file |
-| `ctrl-f` | up to first line |
-| `ctrl-h` | go back $HOME |
-| `ctrl-l` | down to last line |
+| `page-up` | up to first line |
+| `home` | go back $HOME |
+| `page-down` | down to last line |
 | `ctrl-p` | paste previously copied file(s) |
 | `ctrl-r` | rename selected file |
 | `ctrl-t` | create file(s) or directory |
