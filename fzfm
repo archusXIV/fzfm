@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm v0.2.8
+# Script name: fzfm v0.2.9
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities
@@ -18,7 +18,7 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="v0.2.8"
+version="v0.2.9"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -162,8 +162,8 @@ while true; do
 
     export FZF_DEFAULT_OPTS="
         --bind ctrl-a:toggle-all,ctrl-z:deselect
-        --bind ctrl-b:accept,ctrl-f:first,ctrl-l:last,f12:accept
-        --bind ctrl-d:accept,ctrl-e:accept,ctrl-h:accept,ctrl-p:accept
+        --bind ctrl-b:accept,page-up:first,page-down:last,f12:accept
+        --bind ctrl-d:accept,ctrl-e:accept,home:accept,ctrl-p:accept
         --bind ctrl-r:accept,ctrl-t:accept,ctrl-x:accept,ctrl-y:accept
         --bind 'ctrl-w:change-preview-window($left|$right)'
         --border-label-pos=5:bottom
@@ -171,7 +171,7 @@ while true; do
         --border-label='${cyn}[ ${bold}fzfm $version${nobold} ]${noc}'
         --color 'bg:$BACKGROUND,bg+:$SEL_BACKGROUND,marker:${marker[*]//[0-9]/a}'
         --color 'border:cyan,pointer:$POINTER'
-        --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:cyan'
+        --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:yellow'
         --cycle
         --header-border=rounded
         --header-label ' selected file perms '
@@ -221,7 +221,7 @@ while true; do
             fi" \
             --bind "focus:transform-header:stat -c %A {}" \
             --preview-label="${cyn}[ ${bold}disk: $disk${nobold} ]${noc}" \
-            --expect=f12,ctrl-b,ctrl-d,ctrl-e,ctrl-h,ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x \
+            --expect=f12,ctrl-b,ctrl-d,ctrl-e,home,ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x \
             --list-label " Current dir: ${current_dir} "
     )
 
@@ -294,7 +294,7 @@ while true; do
             fi
             continue
         ;;
-        ctrl-h)
+        home)
             [[ $selection != "/home/$USER" ]] && {
                 cd /home/"$USER" || return 1
             }

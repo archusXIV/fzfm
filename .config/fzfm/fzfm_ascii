@@ -13,19 +13,19 @@
              F12: open config (fzfmrc)
              TAB: select, SHIFT+TAB: cancel selection
              CTRL+A then CTRL+Z: select all
-             CTRL+B: open bookmarks menu
-             CTRL+D: delete file(s)
-             CTRL+E: edit a file
-             CTRL+F: go to the first line of the list
-             CTRL+H: go $HOME
-             CTRL+L: go to the last line of the list
-             CTRL+P: paste your last copied file(s)
-             CTRL+R: rename a file
-             CTRL+T: create new file(s) or a folder(s)
-             CTRL+W: flip preview window left/right
-             CTRL+X: cut (move) a file or more
-             CTRL+Y: yank file(s)
-             ESCAPE: exit
+             CTRL+B   : open bookmarks menu
+             CTRL+D   : delete file(s)
+             CTRL+E   : edit a file
+             PAGE-UP  : go to the first line of the list
+             HOME     : go $HOME
+             PAGE-DOWN: go to the last line of the list
+             CTRL+P   : paste your last copied file(s)
+             CTRL+R   : rename a file
+             CTRL+T   : create new file(s) or a folder(s)
+             CTRL+W   : flip preview window left/right
+             CTRL+X   : cut (move) a file or more
+             CTRL+Y   : yank file(s)
+             ESCAPE   : exit
 
             !!! KEYBOARD SHORTCUTS CANNOT BE MODIFIED !!!
             If you want to change the ascii logo, use the tenth first lines.
