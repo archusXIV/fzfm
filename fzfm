@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm v0.2.9
+# Script name: fzfm v0.2.11
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities
 # - copy/paste, move, rename, create, edit, delete files
 # - bookmarks support
-# Navigate directories with fzf selection previews update dynamically.
-# Dependencies: bat, chafa and tree for previews and programs determined in ~/.config/fzfm/fzfmrc
-# Press Ctrl-C or ESC in fzf to exit.
+# - Navigate directories with fzf selection previews update dynamically.
+# - Dependencies: bat, ueberzugpp and tree for previews and programs determined in ~/.config/fzfm/fzfmrc
+# - Press Ctrl-C or ESC in fzf to exit.
 
 # shellcheck disable=SC2154
 # shellcheck source=/dev/null
@@ -18,7 +18,7 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="v0.2.9"
+version="v0.2.11"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -83,14 +83,14 @@ shift $(( OPTIND - 1 ))
 
 # Ensure required tools and files are installed
 declare -a deps=(
-    bat chafa df fzf stat tree
+    bat df fzf stat tree ueberzugpp
     "$IMAGE_VIEWER" "$FILE_INFO"
     "$FZFM_EDITOR" "$MEDIA_INFO"
     "$ascii_file" "$book_marks"
 )
 
 for dep in "${deps[@]:0:10}"; do
-    command -v "$dep" >/dev/null || {
+    command -v "$dep" &> /dev/null || {
         echo "$dep is needed but not installed, exiting..."
         exit 127
     }
@@ -102,6 +102,34 @@ for dep in "${deps[@]:10:11}"; do
         exit 127
     }
 done
+
+# We need to start a persistent ueberzugpp daemon
+# to render image previews in the fzf preview pane
+ueberzug_pid_file=$(mktemp -u /tmp/fzfm_ueberzug_XXXXXX.pid)
+ueberzug_identifier="fzfm_preview"
+ueberzugpp layer \
+    --silent \
+    --no-stdin \
+    --pid-file "$ueberzug_pid_file" \
+    -o "${UEBERZUG_OUTPUT:-x11}" &
+
+for _ in {1..20}; do
+    [[ -s $ueberzug_pid_file ]] && break
+    sleep 0.1
+done
+
+ueberzug_socket="/tmp/ueberzugpp-$(cat "$ueberzug_pid_file" 2> /dev/null).socket"
+_ueberzugSend() {
+    [[ -S $ueberzug_socket ]] && ueberzugpp cmd -s "$ueberzug_socket" "$@" &> /dev/null
+}
+
+_ueberzugCleanup() {
+    _ueberzugSend -a remove -i "$ueberzug_identifier"
+    [[ -s $ueberzug_pid_file ]] && kill "$(cat "$ueberzug_pid_file")" &> /dev/null
+    rm -f "$ueberzug_pid_file"
+}
+
+trap _ueberzugCleanup EXIT
 
 _mediaPlayer() {
     local media_file=$1
@@ -135,14 +163,16 @@ source_file=""
 # Main loop for navigation
 while true; do
 
-    : "${LINES:=36}"
-    : "${COLUMNS:=130}"
+    : "${TERM_LINES:=36}"
+    : "${TERM_COLUMNS:=130}"
     : "${BACKGROUND:="#000000"}"
     : "${SEL_BACKGROUND:="#000000"}"
-    : "${POINTER:="#990900"}"
+    : "${POINTER_COLOR:="#990900"}"
     : "${PREVIEW_POS:=right}"
 
-    # testing what's defined in fzfmrc for preview-window flipping mecanism @line 168
+    [[ $POINTER_SHAPE == 'default' ]] && POINTER_SHAPE="|>"
+
+    # testing what's defined in fzfmrc for preview-window flipping mecanism @line 170
     if [[ $PREVIEW_POS == 'right' ]]; then
         right=right
         left=left
@@ -151,7 +181,7 @@ while true; do
         left=right
     fi
 
-    echo -ne "\e[8;${LINES};${COLUMNS}t"
+    echo -ne "\e[8;${TERM_LINES};${TERM_COLUMNS}t"
 
     mapfile -t marker <<< "$BACKGROUND"
 
@@ -165,12 +195,12 @@ while true; do
         --bind ctrl-b:accept,page-up:first,page-down:last,f12:accept
         --bind ctrl-d:accept,ctrl-e:accept,home:accept,ctrl-p:accept
         --bind ctrl-r:accept,ctrl-t:accept,ctrl-x:accept,ctrl-y:accept
-        --bind 'ctrl-w:change-preview-window($left|$right)'
+        --bind 'ctrl-w:change-preview-window(${left}|${right})'
         --border-label-pos=5:bottom
         --border=rounded
-        --border-label='${cyn}[ ${bold}fzfm $version${nobold} ]${noc}'
-        --color 'bg:$BACKGROUND,bg+:$SEL_BACKGROUND,marker:${marker[*]//[0-9]/a}'
-        --color 'border:cyan,pointer:$POINTER'
+        --border-label='${cyn}[ ${bold}fzfm ${version}${nobold} ]${noc}'
+        --color 'bg:${BACKGROUND},bg+:${SEL_BACKGROUND},marker:${marker[*]//[0-9]/a}'
+        --color 'border:cyan,pointer:${POINTER_COLOR}'
         --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:yellow'
         --cycle
         --header-border=rounded
@@ -184,8 +214,8 @@ while true; do
         --list-border=rounded
         --list-label-pos=top
         --multi
-        --preview-window=$PREVIEW_POS:65%
-        --pointer '|>'
+        --preview-window=${PREVIEW_POS}:65%
+        --pointer='${POINTER_SHAPE}'
         --reverse
         --scroll-off=5
     "
@@ -196,11 +226,12 @@ while true; do
         current_dir=${PWD##*/}
     fi
 
-    disk=$(df -h "$(pwd)" | awk 'NR==2 {print $3"/"$2}')
-    # fzf preview: bat/chafa/exiftool/mediainfo for files, tree for directories
+    disk=$(df -h "$(pwd)" | awk 'NR==2 {print $3" / "$2}')
+    # fzf preview: bat/ueberzugpp/exiftool/mediainfo for files, tree for directories
     selection=$(
         command ls -a --group-directories-first | grep -v '^.$' \
         | fzf --preview="
+            ueberzugpp cmd -s '$ueberzug_socket' -a remove -i $ueberzug_identifier &> /dev/null
             if [[ $(pwd) == '/' && {} == '..' ]]; then
                 echo -e ${red}'\n          ${dotdotadvice[0]}\n'${noc}
                 head -29 $ascii_file
@@ -210,8 +241,10 @@ while true; do
             elif [[ -d {} ]]; then
                 tree -C {} | head -200
             elif [[ {} =~ ${IMAGE_EXTS}$ ]]; then
-                chafa --colors 240 --color-space din99d \
-                --size=\"\$FZF_PREVIEW_COLUMNS\"x\"\$FZF_PREVIEW_LINES\" {}
+                ueberzugpp cmd -s '$ueberzug_socket' -a add -i $ueberzug_identifier \
+                -x \"\$FZF_PREVIEW_LEFT\" -y \"\$FZF_PREVIEW_TOP\" \
+                --max-width \"\$FZF_PREVIEW_COLUMNS\" --max-height \"\$FZF_PREVIEW_LINES\" \
+                -f \"$(pwd)\"/{} &> /dev/null
             elif [[ {} =~ ${MEDIA_EXTS}$ ]]; then
                 $MEDIA_INFO {}
             elif [[ {} =~ ${OTHER_EXTS}$ ]]; then
@@ -227,6 +260,9 @@ while true; do
 
     # If nothing selected (ESC or Ctrl-C), exit the loop
     [[ -z $selection ]] && break
+
+    # Clear any lingering image overlay before running prompts/cd/editor
+    _ueberzugSend -a remove -i "$ueberzug_identifier"
 
     mapfile -t fzf_output <<< "$selection"
     key="${fzf_output[0]}"
@@ -267,7 +303,7 @@ while true; do
         ;;
         ctrl-d)
             tput clear
-            # Get all selected items except ctrl-d
+            # Getting all selected items except ctrl-d
             selected_items=("${fzf_output[@]:1}")
             # Avoiding dotdot to be removed
             __dotsAreSelected && continue
@@ -275,7 +311,7 @@ while true; do
             printf '%s\n' "${selected_items[@]}"
             read -r -p " ${red}Remove these ${#selected_items[@]} items? [y/N]: ${noc}" remove
             case $remove in
-                [yY])
+                [yY]|"")
                     rm -rf "${selected_items[@]}"
                     unset selected_items
                 ;;
@@ -333,12 +369,18 @@ while true; do
         ;;
         ctrl-t)
             __editNewFile() {
-                read -r -p " ${grn}Edit ${new_file}? [Y/n]: ${noc}" edit
-                if [[ $edit =~ [yY] && -f $new_dir/$new_file ]]; then
-                    "$FZFM_EDITOR" "$new_dir/$new_file"
-                elif [[ $edit =~ [yY] && ! -d $new_file ]]; then
-                    "$FZFM_EDITOR" "$new_file"
-                fi
+            read -rsn 1 -p " ${grn}Edit ${new_file}? [Y/n]: ${noc}" edit
+            case "$edit" in
+                [yY]|"")
+                    [[ -f $new_dir/$new_file ]] && "$FZFM_EDITOR" "$new_dir/$new_file"
+                    [[ ! -d $new_file ]] && "$FZFM_EDITOR" "$new_file"
+                ;;
+                [nN]) : ;;
+                *)
+                    printf '\n%s\n' " ${red}Wrong option $edit.${noc}"
+                    sleep 2
+                ;;
+            esac
                 unset IFS edit new_dir new_file
             }
             tput clear

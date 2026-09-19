@@ -38,6 +38,8 @@ IMAGE_VIEWER=sxiv
 FILE_INFO=exiftool
 MEDIA_INFO=mediainfo
 MEDIA_PLAYER=mpv
+# image preview backend used by ueberzugpp: x11, wayland, sixel, kitty, iterm2, chafa
+UEBERZUG_OUTPUT=x11
 
 ############ FILE EXTENSIONS ############
 EDITOR_EXTS="(.conf|.ini|.html|.json|.lua|.log|.md|.py|.sh|.toml|.txt|.xml)"
