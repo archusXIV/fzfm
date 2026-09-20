@@ -104,7 +104,7 @@ for dep in "${deps[@]:10:11}"; do
 done
 
 # We need to start a persistent ueberzugpp daemon
-# to render image previews in the fzf preview pane.
+# to render image previews in the fzf preview pane
 ueberzug_pid_file=$(mktemp -u /tmp/fzfm_ueberzug_XXXXXX.pid)
 ueberzug_identifier="fzfm_preview"
 ueberzugpp layer \
@@ -112,6 +112,7 @@ ueberzugpp layer \
     --no-stdin \
     --pid-file "$ueberzug_pid_file" \
     -o "${UEBERZUG_OUTPUT:-x11}" &
+
 # ueberzugpp getting ready, give it some time.
 for _ in {1..20}; do
     [[ -s $ueberzug_pid_file ]] && break
@@ -125,16 +126,26 @@ _ueberzugSend() {
 # A good practice is to export functions used by fzf commands.
 export -f _ueberzugSend
 
+# stty only restores kernel tty driver modes (echo/icanon). Terminal emulators
+# also track render state via escape codes (mouse reporting, bracketed paste,
+# alt-screen, cursor visibility); an abruptly killed player can leave those
+# enabled and stty alone won't undo them. Reset both, emulator-agnostic.
+_resetTerminal() {
+    stty sane 2> /dev/null
+    printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l\e[?2004l\e[?1049l\e[?25h'
+}
+
 _ueberzugCleanup() {
     _ueberzugSend -a remove -i "$ueberzug_identifier"
     [[ -s $ueberzug_pid_file ]] && kill "$(cat "$ueberzug_pid_file")" &> /dev/null
     rm -f "$ueberzug_pid_file"
+    _resetTerminal
 }
 
 trap _ueberzugCleanup EXIT
 
 _mediaPlayer() {
-    local media_file=$1
+    local media_file="$1"
     # Media player should run outside of the menu (detatched from the terminal),
     # so that we stay in the menu if we want to navigate around.
     __terminateMediaPlayer() {
@@ -144,15 +155,18 @@ _mediaPlayer() {
 
     if [[ $MEDIA_PLAYER == 'mpv' ]] && (( ${#fzf_output[@]} > 1 )); then
         __terminateMediaPlayer && \
-        printf '%s\n' "${fzf_output[@]}" | mpv \
-        --no-terminal "${mpvOptions[@]}" --playlist=-
+        printf '%s\n' "${fzf_output[@]}" | setsid -f mpv \
+        --no-terminal "${mpvOptions[@]}" --playlist=- &> /dev/null
     elif [[ $MEDIA_PLAYER == 'mpv' ]]; then
-        __terminateMediaPlayer && mpv --no-terminal "${mpvOptions[@]}" "$media_file"
+        __terminateMediaPlayer && setsid -f \
+        mpv --no-terminal "${mpvOptions[@]}" "$media_file" &> /dev/null
     else
         # Other media players may use the command line too...
-        __terminateMediaPlayer && "$MEDIA_PLAYER" "$media_file"
+        __terminateMediaPlayer && setsid -f \
+        "$MEDIA_PLAYER" "$media_file" &> /dev/null
     fi
     tput clear
+    _resetTerminal
 }
 
 declare -a dotdotadvice=(
@@ -469,9 +483,9 @@ while true; do
     if [[ -d $selection ]]; then
         cd "$selection" || return 1
     elif [[ $selection =~ ${IMAGE_EXTS}$ ]]; then
-        "$IMAGE_VIEWER" "$selection" & disown
+        setsid -f "$IMAGE_VIEWER" "$selection" < /dev/null &> /dev/null
     elif [[ $selection =~ ${MEDIA_EXTS}$ || $selection =~ ${PLSTS_EXTS}$ ]]; then
-        _mediaPlayer "$selection" & disown
+        _mediaPlayer "$selection"
     elif [[ $selection =~ ${EDITOR_EXTS}$ || $OPEN_ANY == "true" ]]; then
         "$FZFM_EDITOR" "$selection"
     elif [[ $selection =~ ${OTHER_EXTS}$ || $OPEN_ANY == "true" ]]; then
@@ -479,9 +493,10 @@ while true; do
         printf '\n'
         read -r -p " ${grn}Open $selection with?: " program
         case $program in
-            deadbeef|ffplay|mpv|vlc)
+            deadbeef|ffplay|vlc)
                 _mediaPlayer "$selection" & disown
             ;;
+            mpv) _mediaPlayer "$selection" ;;
             *)
                 { "$program" "$selection" & } || {
                     tput clear
@@ -504,4 +519,4 @@ done
 
 unset current_dir
 export FZF_DEFAULT_OPTS=
-tput clear
+reset
