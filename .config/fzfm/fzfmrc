@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# ~/.config/fzfm/fzfmrc
+# ~/.config/fzfm/fzfmrc (v0.2.12)
 #
 #   $$$$$$$$\  $$$$$$$$\  $$$$$$$$\  $$\      $$\
 #   $$  _____| \____$$  | $$  _____| $$$\    $$$ |
@@ -14,26 +14,24 @@
 #
 # shellcheck disable=SC2034
 
-# terminal size (minimun LINES=35 to display all shortcuts)
+# terminal size (minimun TERM_LINES=35 to display all shortcuts)
 LINES=36
 COLUMNS=130
 
+# Themes are located in ~/.config/fzfm/themerc
+# Available themes:
+#     default c64 dark embers gruvbox jellybeans
+#     molokai nord retro seoul256 solarized
+
+THEME=default
+
 ############### FZF OPTIONS ###############
-# hexadecimal color or name: (black,red,green,yellow,blue,magenta,cyan,white)
-# if unset, "#000000" (black) will be used
-# or use ~/.Xresources colors
-# BACKGROUND=$(xrdb -query | awk '/color0:/{print $NF}')
-BACKGROUND="#1c1c40"
-# same thing for SEL_BACKGROUND
-SEL_BACKGROUND=
-# if unset, "#990900" (red) will be used
-POINTER=yellow
-# default, "<>", ">>", "->", etc.
+# default, "<>", ">>", "->", etc
 POINTER_SHAPE=default
 # left/right, if unset then default=right
-PREVIEW_POS=right
+PREVIEW_POS=
 
-################# TOOLS #################
+################## TOOLS ##################
 # terminal text editor (opens within fzfm)
 FZFM_EDITOR=vim
 IMAGE_VIEWER=sxiv
@@ -43,7 +41,7 @@ MEDIA_PLAYER=mpv
 # image preview backend used by ueberzugpp: x11, wayland, sixel, kitty, iterm2, chafa
 UEBERZUG_OUTPUT=x11
 
-############ FILE EXTENSIONS ############
+############# FILE EXTENSIONS #############
 EDITOR_EXTS="(.conf|.ini|.html|.json|.lua|.log|.md|.py|.sh|.toml|.txt|.xml)"
 IMAGE_EXTS="(.bmp|.gif|.jpe?g|.png|.tiff|.webp)"
 MEDIA_EXTS="(.aac|.avi|.flac|.mkv|.mov|.mp[3-4]?|.ogg|.wav|.webm|.wmv)"
@@ -53,7 +51,7 @@ OTHER_EXTS="(.gz|.iso|.pdf|.rar|.xz|.zip|.zst)"
 # true/false
 OPEN_ANY=false
 
-############## MPV OPTIONS ##############
+############### MPV OPTIONS ###############
 mpvOptions=(
     "--no-config" "--idle=once" "--cache=no"
     "--force-window" "--fullscreen=no"

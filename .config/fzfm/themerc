@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# ~/.config/fzfm/themerc (v0.2.12)
+
+###########################################################################
+#'########:'##::::'##:'########:'##::::'##:'########:'########:::'######::#
+#... ##..:: ##:::: ##: ##.....:: ###::'###: ##.....:: ##.... ##:'##... ##:#
+#::: ##:::: ##:::: ##: ##::::::: ####'####: ##::::::: ##:::: ##: ##:::..::#
+#::: ##:::: #########: ######::: ## ### ##: ######::: ########:: ##:::::::#
+#::: ##:::: ##.... ##: ##...:::: ##. #: ##: ##...:::: ##.. ##::: ##:::::::#
+#::: ##:::: ##:::: ##: ##::::::: ##:.:: ##: ##::::::: ##::. ##:: ##::: ##:#
+#::: ##:::: ##:::: ##: ########: ##:::: ##: ########: ##:::. ##:. ######::#
+#:::..:::::..:::::..::........::..:::::..::........::..:::::..:::......:::#
+###################### FZFM THEMES CONFIGURATION FILE #####################
+
+# shellcheck disable=SC2034,SC2016,SC2154
+
+# set your default background color here.
+default_bg="#1c1c23"
+# if you use ~/.Xresources with colors, uncomment the line below.
+# default_bg=$(xrdb -query | awk '/background:/{print $NF}')
+# if you want to recall variables below, use double quotes.
+
+_fzfmColors() {
+
+    case "$1" in
+        default)
+            # Here colors are not defined, your terminal values will be used.
+            export FZF_DEFAULT_OPTS=""
+        ;;
+        c64)
+            export FZF_DEFAULT_OPTS="
+                --color=header:bold:#DD8855
+                --color=fg:#0088FF,fg+:#ffffff,bg:#0000AA,bg+:#0000AA
+                --color=hl:#FF7777,hl+:#AAFF66,info:#AAFFEE
+                --color=prompt:#AAFF66,spinner:#880000,pointer:#CC44CC
+                --color=border:#BBBBBB,label:#EEEE77,query:#BBBBBB
+            "
+        ;;
+        dark)
+            export FZF_DEFAULT_OPTS="
+                --color=header:bold:#87afaf
+                --color=fg:#d0d0d0,fg+:#ffffff,bg:#121212,bg+:#262626
+                --color=hl:#5f87af,hl+:#5fd7ff,info:#afaf87
+                --color=prompt:#d7005f,spinner:#af5fff,pointer:#af5fff
+                --color=border:#262626,label:#aeaeae,query:#d9d9d9
+            "
+        ;;
+        embers)
+            export FZF_DEFAULT_OPTS="
+                --color=header:bold:#576d82
+                --color=fg:#998C82,fg+:#787D57,bg:$default_bg,bg+:$default_bg
+                --color=hl:#576d82,hl+:#82576d,info:#afaf87
+                --color=prompt:#82576d,spinner:#af5fff,pointer:#82576d
+                --color=border:#57826d,label:#998C82,query:#d9d9d9
+            "
+        ;;
+        gruvbox)
+            export FZF_DEFAULT_OPTS="
+                --color=header:bold:#928374
+                --color=bg+:#3c3836,bg:#32302f,border:#6B6B6B
+                --color=spinner:#fb4934,hl:#928374,fg:#ebdbb2
+                --color=info:#8ec07c,pointer:#fb4934,fg+:#ebdbb2
+                --color=preview-bg:#3c3836,prompt:#fb4934,hl+:#fb4934
+            "
+        ;;
+        jellybeans)
+            export FZF_DEFAULT_OPTS="
+                --color=header:bold:#89CFF0
+                --color=bg+:#151511,bg:#121212,border:#5778c1
+                --color=spinner:#ca674a,hl:#87dd32,fg:#5778c1
+                --color=info:#96a967,pointer:#ea2828,fg+:#32dddd
+                --color=prompt:#9c35ac,hl+:#a97ca4
+            "
+        ;;
+        molokai)
+            export FZF_DEFAULT_OPTS="
+                --color=header:bold:#7E8E91
+                --color=bg+:#293739,bg:#1B1D1E,border:#808080
+                --color=spinner:#E6DB74,hl:#7E8E91,fg:#F8F8F2
+                --color=info:#A6E22E,pointer:#A6E22E,fg+:#F8F8F2
+                --color=prompt:#F92672,hl+:#F92672
+            "
+        ;;
+        nord)
+            export FZF_DEFAULT_OPTS="
+                --color=header:bold:#616E88
+                --color=bg+:#3B4252,bg:#2E3440,border:#6B6B6B
+                --color=spinner:#81A1C1,hl:#616E88,fg:#D8DEE9
+                --color=info:#81A1C1,pointer:#81A1C1,fg+:#D8DEE9
+                --color=preview-bg:#3B4252,prompt:#81A1C1,hl+:#81A1C1
+            "
+        ;;
+        retro)
+            export FZF_DEFAULT_OPTS="
+                --color=header:bold:#389844
+                --color=bg+:#000000,bg:#000000,border:#6b946c
+                --color=spinner:#b8ffc5,hl:#6b946c,fg:#48b854
+                --color=info:#98E5A5,pointer:#6b946c,fg+:#55E667
+                --color=preview-bg:#000000,prompt:#389844,hl+:#98E5A5
+            "
+        ;;
+        seoul256)
+            export FZF_DEFAULT_OPTS="
+                --color=header:bold:#719872
+                --color=bg+:#3F3F3F,bg:#4B4B4B,border:#6B6B6B
+                --color=spinner:#98BC99,hl:#719872,fg:#D9D9D9
+                --color=info:#BDBB72,pointer:#E12672,fg+:#D9D9D9
+                --color=preview-bg:#3F3F3F,prompt:#98BEDE,hl+:#98BC99
+            "
+        ;;
+        solarized)
+            export FZF_DEFAULT_OPTS="
+                --color=header:bold:#859900
+                --color=bg+:#002b36,bg:#002b36,border:#859900
+                --color=spinner:#98BC99,hl:#719872,fg:#839496
+                --color=info:#2AA198,pointer:#DC322F,fg+:#B58900
+                --color=preview-bg:#003340,prompt:#DC322F,hl+:#2AA198
+            "
+        ;;
+    esac
+    export -f _fzfmColors
+
+}
+

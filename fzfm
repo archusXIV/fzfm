@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm v0.2.11
+# Script name: fzfm v0.2.12
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities
@@ -18,12 +18,13 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="v0.2.11"
+version="v0.2.12"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
 ascii_file="$config_dir/fzfm_ascii"
 book_marks="$config_dir/fzfm_bookmarks"
+themerc="$config_dir/themerc"
 
 # shell syntax for prompts
 red=$'\e[31m'
@@ -34,8 +35,14 @@ noc=$'\e[0m'
 bold=$'\e[1m'
 nobold=$'\e[21m'
 
-if [[ -f $config ]]; then
+if [[ -f $config && -f $themerc ]]; then
     source "$config"
+    echo -ne "\e[8;${LINES};${COLUMNS}t"
+    source "$themerc" && _fzfmColors "${THEME}"
+elif [[ -f $config && ! -f $themerc ]]; then
+    source "$config"
+    echo -ne "\e[8;${LINES};${COLUMNS}t"
+    export FZF_DEFAULT_OPTS=""
 else
     printf '%s\n' " ${red}$config: no such file or directory.${noc}"
     exit 127
@@ -48,7 +55,7 @@ _usage() {
     =========================================================================
     A TERMINAL BASED SIMPLE FILEMANAGER USING FZF WITH BASIC EXPECTED OPTIONS
     =========================================================================
-    If no option provided then $script_name uses $config
+    ${grn}${bold}If no option provided then $script_name uses $config${nobold}${noc}
     Press Ctrl-C or ESC to exit.
 
     Available options:
@@ -58,9 +65,10 @@ _usage() {
     -i <image viewer> :Set a program to open image files (default:sxiv).
     -m <program>      :Set a program to get infos from selected media file (default:mediainfo).
     -p <player>       :Set a program to play selected media file (default:mpv).
+    -t <theme>        :Use the selected theme from $config_dir/themerc
 
     Example:
-    $script_name -e nano -i feh -f exiftool -m mediainfo -p vlc
+    $script_name -e nano -i feh -f exiftool -m mediainfo -p vlc -t dark
 USAGE
     exit 1
 }
@@ -68,13 +76,14 @@ USAGE
 [[ $1 =~ -h|--help ]] && _usage
 
 # Parsing command-line options
-while getopts "e:f:i:m:p:" opt; do
+while getopts "e:f:i:m:p:t:" opt; do
     case $opt in
         e) FZFM_EDITOR="$OPTARG" ;;
         f) FILE_INFO="$OPTARG" ;;
         i) IMAGE_VIEWER="$OPTARG" ;;
         m) MEDIA_INFO="$OPTARG" ;;
         p) MEDIA_PLAYER="$OPTARG" ;;
+        t) [[ -f $themerc ]] && THEME="$OPTARG" ;;
         *) _usage ;;
     esac
 done
@@ -86,7 +95,7 @@ declare -a deps=(
     bat df fzf stat tree ueberzugpp
     "$IMAGE_VIEWER" "$FILE_INFO"
     "$FZFM_EDITOR" "$MEDIA_INFO"
-    "$ascii_file" "$book_marks"
+    "$ascii_file" "$book_marks" "$themerc"
 )
 
 for dep in "${deps[@]:0:10}"; do
@@ -96,7 +105,7 @@ for dep in "${deps[@]:0:10}"; do
     }
 done
 
-for dep in "${deps[@]:10:11}"; do
+for dep in "${deps[@]:10:12}"; do
     [[ ! -f $dep ]] && {
         echo "${dep##*/} is needed but does not exist, exiting..."
         exit 127
@@ -181,14 +190,12 @@ while true; do
 
     : "${LINES:=36}"
     : "${COLUMNS:=130}"
-    : "${BACKGROUND:="#000000"}"
-    : "${SEL_BACKGROUND:="#000000"}"
-    : "${POINTER_COLOR:="#990900"}"
     : "${PREVIEW_POS:=right}"
+    : "${THEME:=default}"
 
     [[ $POINTER_SHAPE == 'default' ]] && POINTER_SHAPE="|>"
-
-    # testing what's defined in fzfmrc for preview-window flipping mecanism @line 200
+    source "$themerc" && _fzfmColors "${THEME}"
+    # testing what's defined in fzfmrc for preview-window flipping mecanism @line 219
     if [[ $PREVIEW_POS == 'right' ]]; then
         right=right
         left=left
@@ -198,14 +205,13 @@ while true; do
     fi
 
     echo -ne "\e[8;${LINES};${COLUMNS}t"
-    mapfile -t marker <<< "$BACKGROUND"
 
     declare -a bookmarks=()
     while read -r line; do
         [[ ! $line =~ '#' ]] && bookmarks+=("${line}")
     done < "${book_marks}"
 
-    export FZF_DEFAULT_OPTS="
+    export FZF_DEFAULT_OPTS="${FZF_DEFAULT_OPTS}
         --bind ctrl-a:toggle-all,ctrl-z:deselect
         --bind ctrl-b:accept,page-up:first,page-down:last,f12:accept
         --bind ctrl-d:accept,ctrl-e:accept,home:accept,ctrl-p:accept
@@ -214,8 +220,6 @@ while true; do
         --border-label-pos=5:bottom
         --border=rounded
         --border-label='${cyn}[ ${bold}fzfm ${version}${nobold} ]${noc}'
-        --color 'bg:${BACKGROUND},bg+:${SEL_BACKGROUND},marker:${marker[*]//[0-9]/a}'
-        --color 'border:cyan,pointer:${POINTER_COLOR}'
         --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:yellow'
         --cycle
         --header-border=rounded

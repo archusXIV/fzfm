@@ -34,7 +34,8 @@ A simple customizable fzf file manager for Linux with basic options.
 
 ## Features
 fzfm can be launched on the command line (try fzfm -h) or uses a configuration file (~/.config/fzfm/fzfmrc) where customization can be done:
-- colors (bg,bg+,pointer), preview window position (left,right)
+- colors can be changed using [themes](https://github.com/archusXIV/fzfm/blob/main/.config/fzfm/themerc)
+- preview window position (left,right)
 - default programs
 - files extensions definition
 - mpv options (if MEDIA_PLAYER=mpv)
@@ -66,9 +67,10 @@ Available options:
 -i <image viewer> :Set a program to open image files (default:sxiv).
 -m <program>      :Set a program to get infos from selected media file (default:mediainfo).
 -p <player>       :Set a program to play selected media file (default:mpv).
+-t <theme>        :Use the selected theme from ~/.config/fzfm/themerc
 
 Example:
-fzfm -e nano -i feh -f exiftool -m mediainfo
+fzfm -e nano -i feh -f exiftool -m mediainfo -p vlc -t dark
 ```
 
 ## Dependencies
