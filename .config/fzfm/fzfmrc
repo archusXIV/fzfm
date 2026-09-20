@@ -28,6 +28,8 @@ BACKGROUND="#1c1c40"
 SEL_BACKGROUND=
 # if unset, "#990900" (red) will be used
 POINTER=yellow
+# default, "<>", ">>", "->", etc.
+POINTER_SHAPE=default
 # left/right, if unset then default=right
 PREVIEW_POS=right
 
