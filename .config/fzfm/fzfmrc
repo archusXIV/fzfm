@@ -16,7 +16,7 @@
 
 # terminal size (minimun LINES=35 to display all shortcuts)
 LINES=36
-COLUMNS=129
+COLUMNS=130
 
 ############### FZF OPTIONS ###############
 # hexadecimal color or name: (black,red,green,yellow,blue,magenta,cyan,white)
