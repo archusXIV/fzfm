@@ -179,8 +179,8 @@ source_file=""
 # Main loop for navigation
 while true; do
 
-    : "${TERM_LINES:=36}"
-    : "${TERM_COLUMNS:=130}"
+    : "${LINES:=36}"
+    : "${COLUMNS:=130}"
     : "${BACKGROUND:="#000000"}"
     : "${SEL_BACKGROUND:="#000000"}"
     : "${POINTER_COLOR:="#990900"}"
@@ -197,8 +197,7 @@ while true; do
         left=right
     fi
 
-    echo -ne "\e[8;${TERM_LINES};${TERM_COLUMNS}t"
-
+    echo -ne "\e[8;${LINES};${COLUMNS}t"
     mapfile -t marker <<< "$BACKGROUND"
 
     declare -a bookmarks=()
