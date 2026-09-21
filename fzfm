@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm v0.2.12
+# Script name: fzfm version 0.2.13
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities
@@ -18,7 +18,7 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="v0.2.12"
+version="0.2.13"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -55,7 +55,7 @@ _usage() {
     =========================================================================
     A TERMINAL BASED SIMPLE FILEMANAGER USING FZF WITH BASIC EXPECTED OPTIONS
     =========================================================================
-    ${grn}${bold}If no option provided then $script_name uses $config${nobold}${noc}
+    ${grn}${bold}If no option provided then $script_name uses $config${noblod}${noc}
     Press Ctrl-C or ESC to exit.
 
     Available options:
@@ -122,7 +122,7 @@ ueberzugpp layer \
     --pid-file "$ueberzug_pid_file" \
     -o "${UEBERZUG_OUTPUT:-x11}" &
 
-# ueberzugpp getting ready, give it some time.
+# ueberzugpp getting ready, give it some time...
 for _ in {1..20}; do
     [[ -s $ueberzug_pid_file ]] && break
     sleep 0.1
@@ -184,6 +184,9 @@ declare -a dotdotadvice=(
 )
 
 source_file=""
+# ctrl-w toggles this away from PREVIEW_POS;
+# persists across navigation, resets on relaunch.
+preview_flipped=false
 
 # Main loop for navigation
 while true; do
@@ -192,16 +195,18 @@ while true; do
     : "${COLUMNS:=130}"
     : "${PREVIEW_POS:=right}"
     : "${THEME:=default}"
-
     [[ $POINTER_SHAPE == 'default' ]] && POINTER_SHAPE="|>"
+
     source "$themerc" && _fzfmColors "${THEME}"
-    # testing what's defined in fzfmrc for preview-window flipping mecanism @line 219
+
     if [[ $PREVIEW_POS == 'right' ]]; then
-        right=right
-        left=left
+        active_preview_pos=$(
+            [[ $preview_flipped == true ]] && echo left || echo right
+        )
     else
-        right=left
-        left=right
+        active_preview_pos=$(
+            [[ $preview_flipped == true ]] && echo right || echo left
+        )
     fi
 
     echo -ne "\e[8;${LINES};${COLUMNS}t"
@@ -216,10 +221,10 @@ while true; do
         --bind ctrl-b:accept,page-up:first,page-down:last,f12:accept
         --bind ctrl-d:accept,ctrl-e:accept,home:accept,ctrl-p:accept
         --bind ctrl-r:accept,ctrl-t:accept,ctrl-x:accept,ctrl-y:accept
-        --bind 'ctrl-w:change-preview-window(${left}|${right})'
+        --bind ctrl-w:accept,right:accept,left:accept
         --border-label-pos=5:bottom
         --border=rounded
-        --border-label='${cyn}[ ${bold}fzfm ${version}${nobold} ]${noc}'
+        --border-label='${cyn}[ ${bold}fzfm v_${version}${nobold} - Theme: ${THEME} ]${noc}'
         --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:yellow'
         --cycle
         --header-border=rounded
@@ -233,7 +238,7 @@ while true; do
         --list-border=rounded
         --list-label-pos=top
         --multi
-        --preview-window=${PREVIEW_POS}:65%
+        --preview-window=${active_preview_pos}:67%
         --pointer='${POINTER_SHAPE}'
         --reverse
         --scroll-off=5
@@ -273,7 +278,7 @@ while true; do
             fi" \
             --bind "focus:transform-header:stat -c %A {}" \
             --preview-label="${cyn}[ ${bold}disk: $disk${nobold} ]${noc}" \
-            --expect=f12,ctrl-b,ctrl-d,ctrl-e,home,ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x \
+            --expect=left,right,f12,ctrl-b,ctrl-d,ctrl-e,home,ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x,ctrl-w \
             --list-label " Current dir: ${current_dir} "
     )
 
@@ -298,7 +303,15 @@ while true; do
     }
 
     case $key in
-        f12) "$FZFM_EDITOR" "$config" && source "$config"; continue ;;
+        right|left) : ;;
+        f12)
+            # reload config and drop any ctrl-w flip,
+            # so the new PREVIEW_POS takes effect immediately.
+            "$FZFM_EDITOR" "$config" && {
+                source "$config" && preview_flipped=false
+                continue
+            }
+        ;;
         ctrl-b)
             selected_bookmark=$(
                 printf '%s\n' "${bookmarks[@]}" | fzf \
@@ -307,7 +320,7 @@ while true; do
                 --color 'list-label:bold:cyan' \
                 --color 'preview-bg:#000000' \
                 --list-label ' bookmarks ' \
-                --preview-window="$PREVIEW_POS":60% \
+                --preview-window="$active_preview_pos":60% \
                 --preview="
                     printf '%s\n' ' Tips:' \
                     ' Bookmarks help you jump to frequently used directories quickly.'\
@@ -434,12 +447,9 @@ while true; do
             fi
             continue
         ;;
-        ctrl-y)
-            __dotsAreSelected && continue
-            declare -a copy_buffer=()
-            for item in "${fzf_output[@]:1}"; do
-                copy_buffer+=("$PWD/$item")
-            done
+        ctrl-w)
+            [[ $preview_flipped == true ]] && \
+            preview_flipped=false || preview_flipped=true
             continue
         ;;
         ctrl-x)
@@ -477,6 +487,14 @@ while true; do
                 [[ -z ${destination} ]] && __movePrompts --error
                 mv -f -- "${source_file}" "$destination/$(basename "$source_file")"
             fi
+            continue
+        ;;
+        ctrl-y)
+            __dotsAreSelected && continue
+            declare -a copy_buffer=()
+            for item in "${fzf_output[@]:1}"; do
+                copy_buffer+=("$PWD/$item")
+            done
             continue
         ;;
         *) : ;;
