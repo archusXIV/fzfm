@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# ~/.config/fzfm/fzfmrc (v0.2.13)
+# ~/.config/fzfm/fzfmrc (v0.2.14)
 #
 #   $$$$$$$$\  $$$$$$$$\  $$$$$$$$\  $$\      $$\
 #   $$  _____| \____$$  | $$  _____| $$$\    $$$ |
@@ -47,7 +47,7 @@ IMAGE_EXTS="(.bmp|.gif|.jpe?g|.png|.tiff|.webp)"
 MEDIA_EXTS="(.aac|.avi|.flac|.mkv|.mov|.mp[3-4]?|.ogg|.wav|.webm|.wmv)"
 PLSTS_EXTS="(.asx|.m3u|.pls|.ra?m|.wpl|.xspf)"
 OTHER_EXTS="(.gz|.iso|.pdf|.rar|.xz|.zip|.zst)"
-# be asked or not before opening $OTHER_EXTS or files without extension
+# be careful when opening $OTHER_EXTS or files without extension
 # true/false
 OPEN_ANY=false
 

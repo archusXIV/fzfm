@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm version 0.2.13
+# Script name: fzfm version 0.2.14
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities
@@ -11,14 +11,14 @@
 # - Dependencies: bat, ueberzugpp and tree for previews and programs determined in ~/.config/fzfm/fzfmrc
 # - Press Ctrl-C or ESC in fzf to exit.
 
-# shellcheck disable=SC2154
-# shellcheck source=/dev/null
+# shellcheck disable=SC2154,SC1090
+
 # Needed if your shell isn't bash,
 # this will set the bash shell only in this terminal session.
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="0.2.13"
+version="0.2.14"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -83,12 +83,23 @@ while getopts "e:f:i:m:p:t:" opt; do
         i) IMAGE_VIEWER="$OPTARG" ;;
         m) MEDIA_INFO="$OPTARG" ;;
         p) MEDIA_PLAYER="$OPTARG" ;;
-        t) [[ -f $themerc ]] && THEME="$OPTARG" ;;
+        t) THEME="$OPTARG" ;;
         *) _usage ;;
     esac
 done
 
 shift $(( OPTIND - 1 ))
+
+declare -a real_themes=(
+    default c64 dark embers gruvbox jellybeans
+    molokai nord retro seoul256 solarized
+)
+# Testing both command line argument and fzfmrc entry.
+for theme in "${real_themes[@]}"; do
+    [[ $THEME != "$theme" ]] && wrong_theme+=("$THEME")
+done
+
+(( ${#wrong_theme[@]} == ${#real_themes[@]} )) && THEME=default
 
 # Ensure required tools and files are installed
 declare -a deps=(
