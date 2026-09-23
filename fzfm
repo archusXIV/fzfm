@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm version 0.2.14
+# Script name: fzfm version 0.2.15
 # License: GPLv2
 #
-# A simple terminal file manager using fzf, with expected functionalities
-# - copy/paste, move, rename, create, edit, delete files
-# - bookmarks support
+# A simple terminal file manager using fzf, with expected functionalities.
+# - copy/paste, move, rename, create, edit, delete files.
+# - Bookmarks support.
 # - Navigate directories with fzf selection previews update dynamically.
-# - Dependencies: bat, ueberzugpp and tree for previews and programs determined in ~/.config/fzfm/fzfmrc
+# - Dependencies: bat, ueberzugpp and tree for previews and programs
+#   determined in ~/.config/fzfm/fzfmrc.
 # - Press Ctrl-C or ESC in fzf to exit.
 
 # shellcheck disable=SC2154,SC1090
@@ -18,13 +19,15 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="0.2.14"
+version="0.2.15"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
 ascii_file="$config_dir/fzfm_ascii"
 book_marks="$config_dir/fzfm_bookmarks"
 themerc="$config_dir/themerc"
+: "${LINES:=36}"
+: "${COLUMNS:=130}"
 
 # shell syntax for prompts
 red=$'\e[31m'
@@ -35,18 +38,41 @@ noc=$'\e[0m'
 bold=$'\e[1m'
 nobold=$'\e[21m'
 
+# Ensure required tools and files are installed
 if [[ -f $config && -f $themerc ]]; then
     source "$config"
-    echo -ne "\e[8;${LINES};${COLUMNS}t"
     source "$themerc" && _fzfmColors "${THEME}"
 elif [[ -f $config && ! -f $themerc ]]; then
     source "$config"
-    echo -ne "\e[8;${LINES};${COLUMNS}t"
     export FZF_DEFAULT_OPTS=""
 else
     printf '%s\n' " ${red}$config: no such file or directory.${noc}"
     exit 127
 fi
+
+declare -a deps=(
+    bat df fzf stat tree ueberzugpp
+    "$IMAGE_VIEWER" "$FILE_INFO"
+    "$FZFM_EDITOR" "$MEDIA_INFO"
+    "$ascii_file" "$book_marks" "$themerc"
+)
+
+for dep in "${deps[@]:0:10}"; do
+    command -v "$dep" &> /dev/null || {
+        echo "$dep is needed but not installed, exiting..."
+        exit 127
+    }
+done
+
+for dep in "${deps[@]:10:12}"; do
+    [[ ! -f $dep ]] && {
+        echo "${dep##*/} is needed but does not exist, exiting..."
+        exit 127
+    }
+done
+
+# Resizing the terminal
+echo -ne "\e[8;${LINES};${COLUMNS}t"
 
 _usage() {
     tput clear
@@ -90,36 +116,16 @@ done
 
 shift $(( OPTIND - 1 ))
 
-declare -a real_themes=(
-    default c64 dark embers gruvbox jellybeans
-    molokai nord retro seoul256 solarized
-)
 # Testing both command line argument and fzfmrc entry.
-for theme in "${real_themes[@]}"; do
-    [[ $THEME != "$theme" ]] && wrong_theme+=("$THEME")
-done
+while read -r line; do
+    [[ $line =~ ^\s*([A-Za-z0-9_-]+)\)\s*$ ]] && real_themes+=("$line")
+done < "$themerc"
 
-(( ${#wrong_theme[@]} == ${#real_themes[@]} )) && THEME=default
-
-# Ensure required tools and files are installed
-declare -a deps=(
-    bat df fzf stat tree ueberzugpp
-    "$IMAGE_VIEWER" "$FILE_INFO"
-    "$FZFM_EDITOR" "$MEDIA_INFO"
-    "$ascii_file" "$book_marks" "$themerc"
-)
-
-for dep in "${deps[@]:0:10}"; do
-    command -v "$dep" &> /dev/null || {
-        echo "$dep is needed but not installed, exiting..."
-        exit 127
-    }
-done
-
-for dep in "${deps[@]:10:12}"; do
-    [[ ! -f $dep ]] && {
-        echo "${dep##*/} is needed but does not exist, exiting..."
-        exit 127
+for theme in "${real_themes[@]/\)/}"; do
+    [[ $THEME != "$theme" ]] && fake_themes+=("$THEME")
+    (( ${#fake_themes[@]} == ${#real_themes[@]} )) && {
+        THEME=default
+        break
     }
 done
 
