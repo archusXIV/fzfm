@@ -7,24 +7,24 @@
               $$ |       $$$$$$$$\  $$ |       $$ | \_/ $$ |
               \__|       \________| \__|       \__|     \__|
                                      SIMPLE FZF FILEMANAGER
-
               Keyboard shortcuts:
 
-              F12: open config (fzfmrc)
+              LEFT/RIGHT/ENTER: open selected file/directory
               TAB: select, SHIFT+TAB: cancel selection
-              CTRL+A then CTRL+Z: select all
-              CTRL+B   : open bookmarks menu
-              CTRL+D   : delete file(s)
-              CTRL+E   : edit a file
+              PAGE-DOWN: go to the last line of the list
               PAGE-UP  : go to the first line of the list
               HOME     : go $HOME
-              PAGE-DOWN: go to the last line of the list
+              CTRL+A   : select all, CTRL+Z: toggle selection
+              CTRL+B   : open bookmarks menu
+              CTRL+D   : delete selected file(s)
+              CTRL+E   : edit selected file
               CTRL+P   : paste your last copied file(s)
-              CTRL+R   : rename a file
-              CTRL+T   : create new file(s) or a folder(s)
+              CTRL+R   : rename selected file
+              CTRL+T   : create new file(s) or folder(s)
               CTRL+W   : flip preview window left/right
-              CTRL+X   : cut (move) a file or more
-              CTRL+Y   : yank file(s)
+              CTRL+X   : cut (move) selected file(s)
+              CTRL+Y   : yank selected file(s)
+              F12      : open config (fzfmrc)
               ESCAPE   : exit
 
             !!! KEYBOARD SHORTCUTS CANNOT BE MODIFIED !!!

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm version 0.2.15
+# Script name: fzfm version 0.2.16
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities.
@@ -12,14 +12,14 @@
 #   determined in ~/.config/fzfm/fzfmrc.
 # - Press Ctrl-C or ESC in fzf to exit.
 
-# shellcheck disable=SC2154,SC1090
+# shellcheck disable=SC2154,SC1090,SC2155
 
 # Needed if your shell isn't bash,
 # this will set the bash shell only in this terminal session.
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="0.2.15"
+version="0.2.16"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -110,7 +110,10 @@ while getopts "e:f:i:m:p:t:" opt; do
         m) MEDIA_INFO="$OPTARG" ;;
         p) MEDIA_PLAYER="$OPTARG" ;;
         t) THEME="$OPTARG" ;;
-        *) _usage ;;
+        *)
+            printf '%s\n' " ${red}Try: ${0##*/} -h.${noc}"
+            exit 1
+        ;;
     esac
 done
 
@@ -123,6 +126,7 @@ done < "$themerc"
 
 for theme in "${real_themes[@]/\)/}"; do
     [[ $THEME != "$theme" ]] && fake_themes+=("$THEME")
+    # We could also write this test outside the loop.
     (( ${#fake_themes[@]} == ${#real_themes[@]} )) && {
         THEME=default
         break
@@ -130,41 +134,42 @@ for theme in "${real_themes[@]/\)/}"; do
 done
 
 # We need to start a persistent ueberzugpp daemon
-# to render image previews in the fzf preview pane
-ueberzug_pid_file=$(mktemp -u /tmp/fzfm_ueberzug_XXXXXX.pid)
-ueberzug_identifier="fzfm_preview"
+# to render image previews in the fzf preview pane.
+export ubz_pid_file=$(mktemp -u /tmp/fzfm_ueberzug_XXXXXX.pid)
+export ubz_identifier="fzfm_preview"
 ueberzugpp layer \
     --silent \
     --no-stdin \
-    --pid-file "$ueberzug_pid_file" \
+    --pid-file "$ubz_pid_file" \
     -o "${UEBERZUG_OUTPUT:-x11}" &
 
 # ueberzugpp getting ready, give it some time...
 for _ in {1..20}; do
-    [[ -s $ueberzug_pid_file ]] && break
+    [[ -s $ubz_pid_file ]] && break
     sleep 0.1
 done
 
-ueberzug_socket="/tmp/ueberzugpp-$(cat "$ueberzug_pid_file" 2> /dev/null).socket"
+export ubz_sock="/tmp/ueberzugpp-$(cat "$ubz_pid_file" 2> /dev/null).socket"
 _ueberzugSend() {
-    [[ -S $ueberzug_socket ]] && ueberzugpp cmd -s "$ueberzug_socket" "$@" &> /dev/null
+    [[ -S $ubz_sock ]] && ueberzugpp cmd -s "$ubz_sock" "$@" &> /dev/null
 }
 # A good practice is to export functions used by fzf commands.
 export -f _ueberzugSend
 
-# stty only restores kernel tty driver modes (echo/icanon). Terminal emulators
-# also track render state via escape codes (mouse reporting, bracketed paste,
-# alt-screen, cursor visibility); an abruptly killed player can leave those
-# enabled and stty alone won't undo them. Reset both, emulator-agnostic.
+# stty only restores kernel tty driver modes (echo/icanon).
+# Terminal emulators also track render state via escape codes
+# (mouse reporting, bracketed paste, alt-screen, cursor visibility);
+# an abruptly killed player can leave those enabled
+# and stty alone won't undo them. Reset both, emulator-agnostic.
 _resetTerminal() {
     stty sane 2> /dev/null
     printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l\e[?2004l\e[?1049l\e[?25h'
 }
 
 _ueberzugCleanup() {
-    _ueberzugSend -a remove -i "$ueberzug_identifier"
-    [[ -s $ueberzug_pid_file ]] && kill "$(cat "$ueberzug_pid_file")" &> /dev/null
-    rm -f "$ueberzug_pid_file"
+    _ueberzugSend -a remove -i "$ubz_identifier"
+    [[ -s $ubz_pid_file ]] && kill "$(cat "$ubz_pid_file")" &> /dev/null
+    rm -f "$ubz_pid_file"
     _resetTerminal
 }
 
@@ -201,6 +206,7 @@ declare -a dotdotadvice=(
 )
 
 source_file=""
+resume_selection=""
 # ctrl-w toggles this away from PREVIEW_POS;
 # persists across navigation, resets on relaunch.
 preview_flipped=false
@@ -241,7 +247,7 @@ while true; do
         --bind ctrl-w:accept,right:accept,left:accept
         --border-label-pos=5:bottom
         --border=rounded
-        --border-label='${cyn}[ ${bold}fzfm v_${version}${nobold} - Theme: ${THEME} ]${noc}'
+        --border-label='${cyn}${bold}[ fzfm v_${version} - Theme: ${THEME} ]${nobold}${noc}'
         --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:yellow'
         --cycle
         --header-border=rounded
@@ -268,11 +274,20 @@ while true; do
     fi
 
     disk=$(df -h "$(pwd)" | awk 'NR==2 {print $3" / "$2}')
-    # fzf preview: bat/ueberzugpp/exiftool/mediainfo for files, tree for directories
+    # fzf preview: bat/ueberzugpp/exiftool/mediainfo for files, tree for directories.
+    mapfile -t menu_items < <(command ls -a --group-directories-first | grep -v '^.$')
+    resume_position=1
+    for ((index = 0; index < ${#menu_items[@]}; index++)); do
+        if [[ ${menu_items[index]} == "$resume_selection" ]]; then
+            resume_position=$((index + 1))
+            break
+        fi
+    done
+
     selection=$(
-        command ls -a --group-directories-first | grep -v '^.$' \
-        | fzf --preview="
-            ueberzugpp cmd -s '$ueberzug_socket' -a remove -i $ueberzug_identifier &> /dev/null
+        printf '%s\n' "${menu_items[@]}" \
+        | fzf --bind="load:pos($resume_position)" --preview="
+            ueberzugpp cmd -s '$ubz_sock' -a remove -i $ubz_identifier &> /dev/null
             if [[ $(pwd) == '/' && {} == '..' ]]; then
                 echo -e ${red}'\n          ${dotdotadvice[0]}\n'${noc}
                 head -29 $ascii_file
@@ -282,7 +297,7 @@ while true; do
             elif [[ -d {} ]]; then
                 tree -C {} | head -200
             elif [[ {} =~ ${IMAGE_EXTS}$ ]]; then
-                ueberzugpp cmd -s '$ueberzug_socket' -a add -i $ueberzug_identifier \
+                ueberzugpp cmd -s '$ubz_sock' -a add -i $ubz_identifier \
                 -x \"\$FZF_PREVIEW_LEFT\" -y \"\$FZF_PREVIEW_TOP\" \
                 --max-width \"\$FZF_PREVIEW_COLUMNS\" --max-height \"\$FZF_PREVIEW_LINES\" \
                 -f \"$(pwd)\"/{} &> /dev/null
@@ -295,7 +310,8 @@ while true; do
             fi" \
             --bind "focus:transform-header:stat -c %A {}" \
             --preview-label="${cyn}[ ${bold}disk: $disk${nobold} ]${noc}" \
-            --expect=left,right,f12,ctrl-b,ctrl-d,ctrl-e,home,ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x,ctrl-w \
+            --expect=left,right,f12,ctrl-b,ctrl-d,ctrl-e,home \
+            --expect=ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x,ctrl-w \
             --list-label " Current dir: ${current_dir} "
     )
 
@@ -303,7 +319,7 @@ while true; do
     [[ -z $selection ]] && break
 
     # Clear any lingering image overlay before running prompts/cd/editor
-    _ueberzugSend -a remove -i "$ueberzug_identifier"
+    _ueberzugSend -a remove -i "$ubz_identifier"
 
     mapfile -t fzf_output <<< "$selection"
     key="${fzf_output[0]}"
@@ -372,10 +388,14 @@ while true; do
             tput clear
             if [[ $selection =~ ${EDITOR_EXTS}$ || $OPEN_ANY == "true" ]]; then
                 "$FZFM_EDITOR" "$selection"
+                resume_selection="$selection"
             else
                 printf '\n'
                 read -r -p " ${red}Edit ${selection} with? ${noc}" alt_editor
-                [[ ${alt_editor+x} ]] && "$alt_editor" "$selection"
+                if [[ ${alt_editor+x} ]]; then
+                    "$alt_editor" "$selection"
+                    resume_selection="$selection"
+                fi
             fi
             continue
         ;;
@@ -522,10 +542,13 @@ while true; do
         cd "$selection" || return 1
     elif [[ $selection =~ ${IMAGE_EXTS}$ ]]; then
         setsid -f "$IMAGE_VIEWER" "$selection" < /dev/null &> /dev/null
+        resume_selection="$selection"
     elif [[ $selection =~ ${MEDIA_EXTS}$ || $selection =~ ${PLSTS_EXTS}$ ]]; then
         _mediaPlayer "$selection"
+        resume_selection="$selection"
     elif [[ $selection =~ ${EDITOR_EXTS}$ || $OPEN_ANY == "true" ]]; then
         "$FZFM_EDITOR" "$selection"
+        resume_selection="$selection"
     elif [[ $selection =~ ${OTHER_EXTS}$ || $OPEN_ANY == "true" ]]; then
         tput clear
         printf '\n'
@@ -542,13 +565,17 @@ while true; do
                     sleep 2
                     continue
                 }
+                resume_selection="$selection"
             ;;
         esac
     else
-    tput clear
+        tput clear
         printf '\n'
         read -r -p " ${red}Edit ${selection}? [N/y]: ${noc}" edit
-        [[ $edit =~ [yY] ]] && "$FZFM_EDITOR" "$selection"
+        if [[ $edit =~ [yY] ]]; then
+            "$FZFM_EDITOR" "$selection"
+            resume_selection="$selection"
+        fi
         unset edit
     fi
     continue

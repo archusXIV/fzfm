@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ~/.config/fzfm/themerc (v0.2.14)
+# ~/.config/fzfm/themerc (v0.2.16)
 
 ###########################################################################
 #'########:'##::::'##:'########:'##::::'##:'########:'########:::'######::#
@@ -15,7 +15,7 @@
 # shellcheck disable=SC2034,SC2016,SC2154
 
 # set your default background color here.
-default_bg="#1c1c40"
+default_bg="#1c1c23"
 # if you use ~/.Xresources with colors, uncomment the line below.
 # default_bg=$(xrdb -query | awk '/background:/{print $NF}')
 # if you want to recall variables below, use double quotes.
@@ -49,10 +49,11 @@ _fzfmColors() {
         embers)
             export FZF_DEFAULT_OPTS="
                 --color=header:bold:#576d82
-                --color=fg:#998C82,fg+:#787D57,bg:$default_bg,bg+:$default_bg
+                --color=fg:#998C82,fg+:#787D57,bg:#1e1f29,bg+:$default_bg
                 --color=hl:#576d82,hl+:#82576d,info:#afaf87
                 --color=prompt:#82576d,spinner:#af5fff,pointer:#82576d
                 --color=border:#57826d,label:#998C82,query:#d9d9d9
+                --color=preview-bg:#252633
             "
         ;;
         gruvbox)
@@ -122,4 +123,3 @@ _fzfmColors() {
     export -f _fzfmColors
 
 }
-
