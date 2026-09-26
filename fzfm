@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm version 0.2.16
+# Script name: fzfm version 0.2.17
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities.
 # - copy/paste, move, rename, create, edit, delete files.
 # - Bookmarks support.
 # - Navigate directories with fzf selection previews update dynamically.
-# - Dependencies: bat, ueberzugpp and tree for previews and programs
+# - Dependencies: bat, ueberzugpp, tree for previews and programs
 #   determined in ~/.config/fzfm/fzfmrc.
 # - Press Ctrl-C or ESC in fzf to exit.
 
@@ -19,7 +19,7 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="0.2.16"
+version="0.2.17"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -356,9 +356,9 @@ while true; do
                 --preview-window="$active_preview_pos":60% \
                 --preview="
                     printf '%s\n' ' Tips:' \
-                    ' Bookmarks help you jump to frequently used directories quickly.'\
-                    ' Add/remove bookmarks by editing ~/.config/fzfm/fzfm_bookmarks.' \
-                    ' Press Enter to access the selected bookmark path.'
+                    ' - Bookmarks help you jump to frequently used directories quickly.'\
+                    ' - Add/remove bookmarks by editing ~/.config/fzfm/fzfm_bookmarks.' \
+                    ' - Press Enter to access the selected bookmark path.'
                 "
             )
             selected_bookmark="${selected_bookmark/#~/$HOME}"
@@ -380,7 +380,10 @@ while true; do
                     rm -rf "${selected_items[@]}"
                     unset selected_items
                 ;;
-                *) unset selected_items ;;
+                *)
+                    unset selected_items
+                    resume_selection="$selection"
+                ;;
             esac
             continue
         ;;
@@ -417,8 +420,10 @@ while true; do
                 dest="$(pwd)/$base"
                 if [[ $source == "$dest" ]]; then
                     cp -a -- "$source" "${dest}_"
+                    resume_selection="${dest##*/}_"
                 else
                     cp -a -- "$source" "$dest"
+                    resume_selection="${dest##*/}"
                 fi
             done
             continue
@@ -434,22 +439,26 @@ while true; do
                 continue
             }
             mv -f -- "${source_file}" "${new_name}"
+            resume_selection="${new_name}"
             continue
         ;;
         ctrl-t)
             __editNewFile() {
-            read -rsn 1 -p " ${grn}Edit ${new_file}? [Y/n]: ${noc}" edit
-            case "$edit" in
-                [yY]|"")
-                    [[ -f $new_dir/$new_file ]] && "$FZFM_EDITOR" "$new_dir/$new_file"
-                    [[ ! -d $new_file ]] && "$FZFM_EDITOR" "$new_file"
-                ;;
-                [nN]) : ;;
-                *)
-                    printf '\n%s\n' " ${red}Wrong option $edit.${noc}"
-                    sleep 2
-                ;;
-            esac
+                read -rsn 1 -p " ${grn}Edit ${new_file}? [Y/n]: ${noc}" edit
+                case "$edit" in
+                    [yY]|"")
+                        [[ -f $new_dir/$new_file ]] && "$FZFM_EDITOR" "$new_dir/$new_file"
+                        [[ ! -d $new_file ]] && {
+                            "$FZFM_EDITOR" "$new_file"
+                            resume_selection="$new_file"
+                        }
+                    ;;
+                    [nN]) : ;;
+                    *)
+                        printf '\n%s\n' " ${red}Wrong option $edit.${noc}"
+                        sleep 2
+                    ;;
+                esac
                 unset IFS edit new_dir new_file
             }
             tput clear
@@ -476,7 +485,7 @@ while true; do
                 done
                 unset IFS new_file new_files
             elif [[ -f $new_file || -d $new_file ]]; then
-                touch -- "${new_file}"_ && new_file="${new_file}"_
+                touch -- "${new_file}_" && new_file="${new_file}_"
                 __editNewFile
             else
                 touch -- "${new_file}"
@@ -487,6 +496,7 @@ while true; do
         ctrl-w)
             [[ $preview_flipped == true ]] && \
             preview_flipped=false || preview_flipped=true
+            resume_selection="$selection"
             continue
         ;;
         ctrl-x)

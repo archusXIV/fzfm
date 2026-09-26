@@ -91,7 +91,7 @@ chmod +x ./fzfm
 ```
 
 Move fzfm script in your $PATH
-Check the config file ([fzfmrc](https://github.com/archusXIV/fzfm/blob/main/.config/fzfm/fzfmrc)) and make sure defined programs are installed.
+Check your config file (~/.config/fzfm/fzfmrc) and make sure defined programs are installed.
 
 ## Keyboard shortcuts
 
