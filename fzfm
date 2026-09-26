@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm version 0.2.17
+# Script name: fzfm version 0.2.18
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities.
@@ -12,14 +12,14 @@
 #   determined in ~/.config/fzfm/fzfmrc.
 # - Press Ctrl-C or ESC in fzf to exit.
 
-# shellcheck disable=SC2154,SC1090,SC2155
+# shellcheck disable=SC2154,SC1090,SC2155,SC2164
 
 # Needed if your shell isn't bash,
 # this will set the bash shell only in this terminal session.
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="0.2.17"
+version="0.2.18"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -217,6 +217,7 @@ while true; do
     : "${LINES:=36}"
     : "${COLUMNS:=130}"
     : "${PREVIEW_POS:=right}"
+    : "${PREVIEW_WIDTH:="65%"}"
     : "${THEME:=default}"
     [[ $POINTER_SHAPE == 'default' ]] && POINTER_SHAPE="|>"
 
@@ -261,7 +262,7 @@ while true; do
         --list-border=rounded
         --list-label-pos=top
         --multi
-        --preview-window=${active_preview_pos}:67%
+        --preview-window=${active_preview_pos}:${PREVIEW_WIDTH}
         --pointer='${POINTER_SHAPE}'
         --reverse
         --scroll-off=5
@@ -346,24 +347,43 @@ while true; do
             }
         ;;
         ctrl-b)
-            selected_bookmark=$(
-                printf '%s\n' "${bookmarks[@]}" | fzf \
-                --prompt='' \
-                --no-multi \
-                --color 'list-label:bold:cyan' \
-                --color 'preview-bg:#000000' \
-                --list-label ' bookmarks ' \
-                --preview-window="$active_preview_pos":60% \
-                --preview="
-                    printf '%s\n' ' Tips:' \
-                    ' - Bookmarks help you jump to frequently used directories quickly.'\
-                    ' - Add/remove bookmarks by editing ~/.config/fzfm/fzfm_bookmarks.' \
-                    ' - Press Enter to access the selected bookmark path.'
-                "
-            )
-            selected_bookmark="${selected_bookmark/#~/$HOME}"
-            [[ -z $selected_bookmark ]] && continue
-            [[ -d $selected_bookmark ]] && cd "$selected_bookmark" || return 1
+            while true; do
+
+                declare -a bookmarks=()
+                while read -r line; do
+                    [[ ! $line =~ '#' ]] && bookmarks+=("${line}")
+                done < "${book_marks}"
+
+                bookmark_selection=$(
+                    printf '%s\n' "${bookmarks[@]}" | fzf \
+                    --prompt='' \
+                    --no-multi \
+                    --bind ctrl-e:accept \
+                    --color 'list-label:bold:cyan' \
+                    --color 'preview-bg:#000000' \
+                    --list-label ' bookmarks ' \
+                    --preview-window="$active_preview_pos:${PREVIEW_WIDTH}" \
+                    --preview="
+                        printf '%s\n' ' Tips:' \
+                        ' - Bookmarks help you jump to frequently used directories quickly.'\
+                        ' - Press Enter to access the selected bookmark path.' \
+                        ' - Press Ctrl-E to edit your bookmarks file.' \
+                    " \
+                    --expect=ctrl-e
+                )
+
+                [[ -z $bookmark_selection ]] && break
+
+                mapfile -t bookmark_output <<< "$bookmark_selection"
+                bookmark_key="${bookmark_output[0]}"
+                selected_bookmark="${bookmark_output[1]}"
+                case $bookmark_key in ctrl-e) "$FZFM_EDITOR" "$book_marks"; continue ;; esac
+                selected_bookmark="${selected_bookmark/#~/$HOME}"
+                [[ -z $selected_bookmark ]] && continue
+                [[ -d $selected_bookmark ]] && cd "$selected_bookmark"
+                break
+
+            done
             continue
         ;;
         ctrl-d)
@@ -402,12 +422,7 @@ while true; do
             fi
             continue
         ;;
-        home)
-            [[ $selection != "/home/$USER" ]] && {
-                cd /home/"$USER" || return 1
-            }
-            continue
-        ;;
+        home) [[ $selection != "/home/$USER" ]] && cd /home/"$USER"; continue ;;
         ctrl-p)
             (( ${#copy_buffer[@]} == 0 )) && {
                 tput clear
@@ -549,7 +564,7 @@ while true; do
 
     # Opening selected folder/file
     if [[ -d $selection ]]; then
-        cd "$selection" || return 1
+        cd "$selection"
     elif [[ $selection =~ ${IMAGE_EXTS}$ ]]; then
         setsid -f "$IMAGE_VIEWER" "$selection" < /dev/null &> /dev/null
         resume_selection="$selection"

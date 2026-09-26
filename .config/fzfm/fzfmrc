@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# ~/.config/fzfm/fzfmrc (v0.2.17)
+# ~/.config/fzfm/fzfmrc (v0.2.18)
 #
 #   $$$$$$$$\  $$$$$$$$\  $$$$$$$$\  $$\      $$\
 #   $$  _____| \____$$  | $$  _____| $$$\    $$$ |
@@ -30,6 +30,8 @@ THEME=default
 POINTER_SHAPE=default
 # left/right, if unset then default=right
 PREVIEW_POS=
+# value% (use quotes), if unset then default=65%
+PREVIEW_WIDTH="65%"
 
 ################## TOOLS ##################
 # terminal text editor (opens within fzfm)

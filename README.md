@@ -35,11 +35,11 @@ A simple customizable fzf file manager for Linux with basic options.
 ## Features
 fzfm can be launched on the command line (try fzfm -h) or uses a configuration file (~/.config/fzfm/fzfmrc) where customization can be done:
 - colors can be changed using [themes](https://github.com/archusXIV/fzfm/blob/main/.config/fzfm/themerc)
-- preview window position (left,right)
+- preview window position (left,right) and width (e.g., "65%")
 - default programs
 - files extensions definition
 - mpv options (if MEDIA_PLAYER=mpv)
-- bookmarks can be defined in ~/.config/fzfm/fzfm_bookmarks
+- bookmarks can be defined in ~/.config/fzfm/fzfm_bookmarks or edited directly with Ctrl-e in the bookmarks menu.
 
 When copying/pasting in the same directory, the new file will be named with an underscore
 - example: my_file -> myfile_ (same as [ranger](https://ranger.fm/) does)
@@ -98,13 +98,13 @@ Check your config file (~/.config/fzfm/fzfmrc) and make sure defined programs ar
 | Motions | Description |
 | :--------- | :---------- |
 | `f12` | edit your config |
+| `page-up` | up to first line |
+| `page-down` | down to last line |
+| `home` | go back $HOME |
 | `ctrl-a` | select all |
 | `ctrl-b` | switch to bookmarks menu |
 | `ctrl-d` | delete selected file(s) |
 | `ctrl-e` | edit selected file |
-| `page-up` | up to first line |
-| `home` | go back $HOME |
-| `page-down` | down to last line |
 | `ctrl-p` | paste previously copied file(s) |
 | `ctrl-r` | rename selected file |
 | `ctrl-t` | create file(s) or directory |
