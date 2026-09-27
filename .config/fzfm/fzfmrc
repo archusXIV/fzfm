@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# ~/.config/fzfm/fzfmrc (v0.2.19)
+# ~/.config/fzfm/fzfmrc (v0.2.20)
 #
 #   $$$$$$$$\  $$$$$$$$\  $$$$$$$$\  $$\      $$\
 #   $$  _____| \____$$  | $$  _____| $$$\    $$$ |
@@ -15,7 +15,7 @@
 # shellcheck disable=SC2034
 
 # terminal size (minimun TERM_LINES=35 to display all shortcuts)
-LINES=36
+LINES=35
 COLUMNS=130
 
 # Themes are located in ~/.config/fzfm/themerc

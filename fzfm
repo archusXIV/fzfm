@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm version 0.2.19
+# Script name: fzfm version 0.2.20
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities.
@@ -19,15 +19,13 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="0.2.19"
+version="0.2.20"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
 ascii_file="$config_dir/fzfm_ascii"
 book_marks="$config_dir/fzfm_bookmarks"
 themerc="$config_dir/themerc"
-: "${LINES:=36}"
-: "${COLUMNS:=130}"
 
 # shell syntax for prompts
 red=$'\e[31m'
@@ -77,6 +75,8 @@ for dep in "${deps[@]}"; do
     ((n++))
 done
 
+: "${LINES:=35}"
+: "${COLUMNS:=130}"
 # Resizing the terminal
 echo -ne "\e[8;${LINES};${COLUMNS}t"
 
@@ -220,7 +220,7 @@ preview_flipped=false
 # Main loop for navigation
 while true; do
 
-    : "${LINES:=36}"
+    : "${LINES:=35}"
     : "${COLUMNS:=130}"
     : "${PREVIEW_POS:=right}"
     : "${PREVIEW_WIDTH:="65%"}"
