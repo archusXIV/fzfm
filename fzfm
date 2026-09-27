@@ -383,7 +383,7 @@ while true; do
                 selected_bookmark="${bookmark_output[1]}"
                 case $bookmark_key in ctrl-e) "$FZFM_EDITOR" "$book_marks"; continue ;; esac
                 selected_bookmark="${selected_bookmark/#~/$HOME}"
-                [[ -z $selected_bookmark ]] && continue
+                [[ -z $selected_bookmark ]] && break
                 [[ -d $selected_bookmark ]] && cd "$selected_bookmark"
                 break
 
