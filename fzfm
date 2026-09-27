@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm version 0.2.18
+# Script name: fzfm version 0.2.19
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities.
@@ -19,7 +19,7 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="0.2.18"
+version="0.2.19"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -51,24 +51,30 @@ else
 fi
 
 declare -a deps=(
+    # required packages
     bat df fzf stat tree ueberzugpp
     "$IMAGE_VIEWER" "$FILE_INFO"
     "$FZFM_EDITOR" "$MEDIA_INFO"
+    # configs files
     "$ascii_file" "$book_marks" "$themerc"
 )
 
-for dep in "${deps[@]:0:10}"; do
-    command -v "$dep" &> /dev/null || {
-        echo "$dep is needed but not installed, exiting..."
-        exit 127
-    }
-done
+pkgs=("${deps[@]:0:10}")
+n=1
 
-for dep in "${deps[@]:10:12}"; do
-    [[ ! -f $dep ]] && {
-        echo "${dep##*/} is needed but does not exist, exiting..."
-        exit 127
-    }
+for dep in "${deps[@]}"; do
+    if (( n <= ${#pkgs[@]} )); then
+        command -v "$dep" &> /dev/null || {
+            echo "$dep is needed but not installed, exiting..."
+            exit 127
+        }
+    elif (( n > ${#pkgs} )); then
+        [[ ! -f $dep ]] && {
+            echo "${dep##*/} is needed but does not exist, exiting..."
+            exit 127
+        }
+    fi
+    ((n++))
 done
 
 # Resizing the terminal
@@ -143,7 +149,7 @@ ueberzugpp layer \
     --pid-file "$ubz_pid_file" \
     -o "${UEBERZUG_OUTPUT:-x11}" &
 
-# ueberzugpp getting ready, give it some time...
+# give ueberzugpp a little bit of time to get ready...
 for _ in {1..20}; do
     [[ -s $ubz_pid_file ]] && break
     sleep 0.1
@@ -359,10 +365,8 @@ while true; do
                     --prompt='' \
                     --no-multi \
                     --bind ctrl-e:accept \
-                    --color 'list-label:bold:cyan' \
-                    --color 'preview-bg:#000000' \
                     --list-label ' bookmarks ' \
-                    --preview-window="$active_preview_pos:${PREVIEW_WIDTH}" \
+                    --color 'list-label:bold:cyan,preview-bg:#000000' \
                     --preview="
                         printf '%s\n' ' Tips:' \
                         ' - Bookmarks help you jump to frequently used directories quickly.'\
@@ -462,11 +466,13 @@ while true; do
                 read -rsn 1 -p " ${grn}Edit ${new_file}? [Y/n]: ${noc}" edit
                 case "$edit" in
                     [yY]|"")
-                        [[ -f $new_dir/$new_file ]] && "$FZFM_EDITOR" "$new_dir/$new_file"
-                        [[ ! -d $new_file ]] && {
+                        if [[ -f $new_dir/$new_file ]]; then
+                            "$FZFM_EDITOR" "$new_dir/$new_file"
+                            cd "$new_dir" && resume_selection="$new_file"
+                        elif [[ ! -d $new_file ]]; then
                             "$FZFM_EDITOR" "$new_file"
                             resume_selection="$new_file"
-                        }
+                        fi
                     ;;
                     [nN]) : ;;
                     *)
@@ -476,12 +482,18 @@ while true; do
                 esac
                 unset IFS edit new_dir new_file
             }
+
             tput clear
             printf '\n'
-            printf '%s\n' " ${grn}Use dir_name/ to create a directory," \
-            " dir_name1/dir_name2/file_name for multiple subdirectories + one file," \
-            " file_name1,file_name2 (comma separated) for multiple files."
-            read -r -p " or simply: my_filename: ${noc}" new_file
+            printf '%s\n' " ${ylw}Tips:" \
+            " ${grn}1: Use dir_name/ to create a directory," \
+            "    (if dir_name already exists it won't be recreated)." \
+            " 2: dir_name1/dir_name2/file_name for multiple subdirectories + one file," \
+            " 3: file_name1,file_name2,etc... (comma separated) for multiple files." \
+            " 4: or simply my_filename.${noc}" \
+            ""
+
+            read -r -p " ${ylw}Create: ${noc}" new_file
             if [[ -z ${new_file} ]]; then
                 echo " ${red}No dir_name or file_name provided...${noc}"
                 sleep 2
@@ -492,7 +504,7 @@ while true; do
                 new_dir=$(dirname "$new_file")
                 new_file=$(basename "$new_file")
                 mkdir -p "${new_dir}" && touch "$new_dir/$new_file"
-                [[ -f $new_dir/$new_file ]] && __editNewFile
+                __editNewFile
             elif [[ $new_file =~ ,+ ]]; then
                 IFS=","; read -r -a new_files <<< "$new_file"
                 for new_file in "${new_files[@]}"; do
@@ -609,4 +621,4 @@ done
 
 unset current_dir
 export FZF_DEFAULT_OPTS=
-reset
+tput reset
