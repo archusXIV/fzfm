@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm version 0.2.20
+# Script name: fzfm version 0.2.21
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities.
@@ -19,7 +19,7 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="0.2.20"
+version="0.2.21"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -53,7 +53,7 @@ declare -a deps=(
     bat df fzf stat tree ueberzugpp
     "$IMAGE_VIEWER" "$FILE_INFO"
     "$FZFM_EDITOR" "$MEDIA_INFO"
-    # configs files
+    # required configs
     "$ascii_file" "$book_marks" "$themerc"
 )
 
@@ -91,39 +91,46 @@ _usage() {
     Press Ctrl-C or ESC to exit.
 
     Available options:
+    -d <directory>    :Start $script_name in a specific directory,
+                       or directly: $script_name <my_directory> (alone).
     -e <editor>       :Set your editor for editing files (default:vim).
     -f <program>      :Set a program to get infos from selected file (default:exiftool).
-    -h|--help         :Print this message and exit.
+    -h                :Print this message and exit.
     -i <image viewer> :Set a program to open image files (default:sxiv).
     -m <program>      :Set a program to get infos from selected media file (default:mediainfo).
     -p <player>       :Set a program to play selected media file (default:mpv).
     -t <theme>        :Use the selected theme from $config_dir/themerc
 
     Example:
-    $script_name -e nano -i feh -f exiftool -m mediainfo -p vlc -t dark
+    $script_name -d $HOME -e nano -i feh -f exiftool -m mediainfo -p vlc -t dark
 USAGE
     exit 1
 }
 
-[[ $1 =~ -h|--help ]] && _usage
-
 # Parsing command-line options
-while getopts "e:f:i:m:p:t:" opt; do
+while getopts "d:e:f:i:m:p:t:h" opt; do
     case $opt in
-        e) FZFM_EDITOR="$OPTARG" ;;
-        f) FILE_INFO="$OPTARG" ;;
-        i) IMAGE_VIEWER="$OPTARG" ;;
-        m) MEDIA_INFO="$OPTARG" ;;
-        p) MEDIA_PLAYER="$OPTARG" ;;
-        t) THEME="$OPTARG" ;;
+        d) DIR="${OPTARG}" ;;
+        e) FZFM_EDITOR="${OPTARG}" ;;
+        f) FILE_INFO="${OPTARG}" ;;
+        h) _usage ;;
+        i) IMAGE_VIEWER="${OPTARG}" ;;
+        m) MEDIA_INFO="${OPTARG}" ;;
+        p) MEDIA_PLAYER="${OPTARG}" ;;
+        t) THEME="${OPTARG}" ;;
         *)
-            printf '%s\n' " ${red}Try: ${0##*/} -h.${noc}"
+            tput clear
+            printf '\n%s\n' " ${red}Wrong option: $1, try: ${0##*/} -h.${noc}"
             exit 1
         ;;
     esac
 done
 
 shift $(( OPTIND - 1 ))
+
+[[ -d $1 ]] && cd "$1"
+[[ -n $DIR ]] && cd "$DIR"
+: "${DIR:=$HOME}"
 
 # Testing both command line argument and fzfmrc entry.
 while read -r line; do
@@ -219,7 +226,7 @@ preview_flipped=false
 
 # Main loop for navigation
 while true; do
-
+    # defined settings (if not set) for dynamic changes
     : "${LINES:=35}"
     : "${COLUMNS:=130}"
     : "${PREVIEW_POS:=right}"
@@ -372,6 +379,7 @@ while true; do
                         ' - Bookmarks help you jump to frequently used directories quickly.'\
                         ' - Press Enter to access the selected bookmark path.' \
                         ' - Press Ctrl-E to edit your bookmarks file.' \
+                        ' - Press Escape to quit this menu.'
                     " \
                     --expect=ctrl-e
                 )

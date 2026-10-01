@@ -63,14 +63,14 @@ Press Ctrl-C or ESC to exit.
 Available options:
 -e <editor>       :Set your editor for editing files (default:vim).
 -f <program>      :Set a program to get infos from selected file (default:exiftool).
--h|--help         :Print this message and exit.
+-h                :Print this message and exit.
 -i <image viewer> :Set a program to open image files (default:sxiv).
 -m <program>      :Set a program to get infos from selected media file (default:mediainfo).
 -p <player>       :Set a program to play selected media file (default:mpv).
 -t <theme>        :Use the selected theme from ~/.config/fzfm/themerc
 
 Example:
-fzfm -e nano -i feh -f exiftool -m mediainfo -p vlc -t dark
+fzfm -d $HOME -e nano -i feh -f exiftool -m mediainfo -p vlc -t dark
 ```
 
 ## Dependencies
