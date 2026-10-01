@@ -61,6 +61,8 @@ If no option provided then fzfm uses ~/.config/fzfm/fzfmrc
 Press Ctrl-C or ESC to exit.
 
 Available options:
+-d <directory>    :Start fzfm in a specific directory,
+                   or directly: fzfm <my_directory> (alone).
 -e <editor>       :Set your editor for editing files (default:vim).
 -f <program>      :Set a program to get infos from selected file (default:exiftool).
 -h                :Print this message and exit.
@@ -70,7 +72,7 @@ Available options:
 -t <theme>        :Use the selected theme from ~/.config/fzfm/themerc
 
 Example:
-fzfm -d $HOME -e nano -i feh -f exiftool -m mediainfo -p vlc -t dark
+fzfm -d "$HOME" -e nano -i feh -f exiftool -m mediainfo -p vlc -t dark
 ```
 
 ## Dependencies
@@ -118,4 +120,4 @@ Check your config file (~/.config/fzfm/fzfmrc) and make sure defined programs ar
 After editing [fzfmrc](https://github.com/archusXIV/fzfm/blob/main/.config/fzfm/fzfmrc) using F12, new settings are applied if correct.
 
 ## Credits
-Thanks to all the fzf devs and maintainers for their greater work.
+Thanks to all the fzf devs and maintainers for their great work.
