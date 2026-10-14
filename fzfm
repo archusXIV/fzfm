@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm version 0.2.21
+# Script name: fzfm version 0.2.22
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities.
@@ -19,7 +19,7 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="0.2.21"
+version="0.2.22"
 script_name=$(basename "$0")
 config_dir="$HOME/.config/fzfm"
 config="$config_dir/fzfmrc"
@@ -87,7 +87,7 @@ _usage() {
     =========================================================================
     A TERMINAL BASED SIMPLE FILEMANAGER USING FZF WITH BASIC EXPECTED OPTIONS
     =========================================================================
-    ${grn}${bold}If no option provided then $script_name uses $config${noblod}${noc}
+    ${grn}${bold}If no option is given then $script_name uses $config${noblod}${noc}
     Press Ctrl-C or ESC to exit.
 
     Available options:
@@ -261,7 +261,6 @@ while true; do
         --bind ctrl-w:accept,right:accept,left:accept
         --border-label-pos=5:bottom
         --border=rounded
-        --border-label='${cyn}${bold}[ fzfm v_${version} - Theme: ${THEME} ]${nobold}${noc}'
         --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:yellow'
         --cycle
         --header-border=rounded
@@ -326,7 +325,8 @@ while true; do
             --preview-label="${cyn}[ ${bold}disk: $disk${nobold} ]${noc}" \
             --expect=left,right,f12,ctrl-b,ctrl-d,ctrl-e,home \
             --expect=ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x,ctrl-w \
-            --list-label " Current dir: ${current_dir} "
+            --list-label " Current dir: ${current_dir} " \
+            --border-label=" ${cyn}${bold}[ fzfm v_${version} - Theme: ${THEME} ] ${nobold}${noc}${ylw}      full path: $(pwd) ${noc}"
     )
 
     # If nothing selected (ESC or Ctrl-C), exit the loop
@@ -376,10 +376,10 @@ while true; do
                     --color 'list-label:bold:cyan,preview-bg:#000000' \
                     --preview="
                         printf '%s\n' ' Tips:' \
-                        ' - Bookmarks help you jump to frequently used directories quickly.'\
+                        ' - Bookmarks help you jump to frequently used directories quickly.' \
                         ' - Press Enter to access the selected bookmark path.' \
                         ' - Press Ctrl-E to edit your bookmarks file.' \
-                        ' - Press Escape to quit this menu.'
+                        ' - Press Escape to quit this menu.' \
                     " \
                     --expect=ctrl-e
                 )
