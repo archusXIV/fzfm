@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Author: Barret E (2026) <https://github.com/archusXIV/fzfm>
-# Script name: fzfm version 0.2.22
+# Script name: fzfm version 0.2.23
 # License: GPLv2
 #
 # A simple terminal file manager using fzf, with expected functionalities.
@@ -19,15 +19,15 @@
 export SHELL="/bin/bash"
 shopt -s checkwinsize
 
-version="0.2.22"
-script_name=$(basename "$0")
-config_dir="$HOME/.config/fzfm"
-config="$config_dir/fzfmrc"
-ascii_file="$config_dir/fzfm_ascii"
-book_marks="$config_dir/fzfm_bookmarks"
-themerc="$config_dir/themerc"
+VERSION="0.2.23"
+NAME=$(basename "$0")
+CONFIG_DIR="$HOME/.config/fzfm"
+CONFIG="$CONFIG_DIR/fzfmrc"
+ASCII_FILE="$CONFIG_DIR/fzfm_ascii"
+BOOK_MARKS="$CONFIG_DIR/fzfm_bookmarks"
+THEMERC="$CONFIG_DIR/themerc"
 
-# shell syntax for prompts
+# shell colors syntax for prompts
 red=$'\e[31m'
 grn=$'\e[32m'
 ylw=$'\e[33m'
@@ -37,14 +37,14 @@ bold=$'\e[1m'
 nobold=$'\e[21m'
 
 # Ensure required tools and files are installed
-if [[ -f $config && -f $themerc ]]; then
-    source "$config"
-    source "$themerc" && _fzfmColors "${THEME}"
-elif [[ -f $config && ! -f $themerc ]]; then
-    source "$config"
+if [[ -f $CONFIG && -f $THEMERC ]]; then
+    source "$CONFIG"
+    source "$THEMERC" && _fzfmColors "${THEME}"
+elif [[ -f $CONFIG && ! -f $THEMERC ]]; then
+    source "$CONFIG"
     export FZF_DEFAULT_OPTS=""
 else
-    printf '%s\n' " ${red}$config: no such file or directory.${noc}"
+    printf '%s\n' " ${red}$CONFIG: no such file or directory.${noc}"
     exit 127
 fi
 
@@ -53,8 +53,8 @@ declare -a deps=(
     bat df fzf stat tree ueberzugpp
     "$IMAGE_VIEWER" "$FILE_INFO"
     "$FZFM_EDITOR" "$MEDIA_INFO"
-    # required configs
-    "$ascii_file" "$book_marks" "$themerc"
+    # required config
+    "$ASCII_FILE" "$BOOK_MARKS" "$THEMERC"
 )
 
 pkgs=("${deps[@]:0:10}")
@@ -62,7 +62,7 @@ n=1
 
 for dep in "${deps[@]}"; do
     if (( n <= ${#pkgs[@]} )); then
-        command -v "$dep" &> /dev/null || {
+        command -v "$dep" >&2 || {
             echo "$dep is needed but not installed, exiting..."
             exit 127
         }
@@ -87,22 +87,22 @@ _usage() {
     =========================================================================
     A TERMINAL BASED SIMPLE FILEMANAGER USING FZF WITH BASIC EXPECTED OPTIONS
     =========================================================================
-    ${grn}${bold}If no option is given then $script_name uses $config${noblod}${noc}
+    ${grn}${bold}If no option is given then $NAME uses $CONFIG${noblod}${noc}
     Press Ctrl-C or ESC to exit.
 
     Available options:
-    -d <directory>    :Start $script_name in a specific directory,
-                       or directly: $script_name <my_directory> (alone).
+    -d <directory>    :Start $NAME in a specific directory,
+                       or directly: $NAME <my_directory> (alone).
     -e <editor>       :Set your editor for editing files (default:vim).
     -f <program>      :Set a program to get infos from selected file (default:exiftool).
     -h                :Print this message and exit.
     -i <image viewer> :Set a program to open image files (default:sxiv).
     -m <program>      :Set a program to get infos from selected media file (default:mediainfo).
     -p <player>       :Set a program to play selected media file (default:mpv).
-    -t <theme>        :Use the selected theme from $config_dir/themerc
+    -t <theme>        :Use the selected theme from $CONFIG_DIR/themerc
 
     Example:
-    $script_name -d $HOME -e nano -i feh -f exiftool -m mediainfo -p vlc -t dark
+    $NAME -d $HOME -e nano -i feh -f exiftool -m mediainfo -p vlc -t dark
 USAGE
     exit 1
 }
@@ -135,7 +135,7 @@ shift $(( OPTIND - 1 ))
 # Testing both command line argument and fzfmrc entry.
 while read -r line; do
     [[ $line =~ ^\s*([A-Za-z0-9_-]+)\)\s*$ ]] && real_themes+=("$line")
-done < "$themerc"
+done < "$THEMERC"
 
 for theme in "${real_themes[@]/\)/}"; do
     [[ $THEME != "$theme" ]] && fake_themes+=("$THEME")
@@ -164,7 +164,7 @@ done
 
 export ubz_sock="/tmp/ueberzugpp-$(cat "$ubz_pid_file" 2> /dev/null).socket"
 _ueberzugSend() {
-    [[ -S $ubz_sock ]] && ueberzugpp cmd -s "$ubz_sock" "$@" &> /dev/null
+    [[ -S $ubz_sock ]] && ueberzugpp cmd -s "$ubz_sock" "$@" >&2
 }
 # A good practice is to export functions used by fzf commands.
 export -f _ueberzugSend
@@ -234,7 +234,7 @@ while true; do
     : "${THEME:=default}"
     [[ $POINTER_SHAPE == 'default' ]] && POINTER_SHAPE="|>"
 
-    source "$themerc" && _fzfmColors "${THEME}"
+    source "$THEMERC" && _fzfmColors "${THEME}"
 
     if [[ $PREVIEW_POS == 'right' ]]; then
         active_preview_pos=$(
@@ -251,7 +251,7 @@ while true; do
     declare -a bookmarks=()
     while read -r line; do
         [[ ! $line =~ '#' ]] && bookmarks+=("${line}")
-    done < "${book_marks}"
+    done < "${BOOK_MARKS}"
 
     export FZF_DEFAULT_OPTS="${FZF_DEFAULT_OPTS}
         --bind ctrl-a:toggle-all,ctrl-z:deselect
@@ -259,7 +259,7 @@ while true; do
         --bind ctrl-d:accept,ctrl-e:accept,home:accept,ctrl-p:accept
         --bind ctrl-r:accept,ctrl-t:accept,ctrl-x:accept,ctrl-y:accept
         --bind ctrl-w:accept,right:accept,left:accept
-        --border-label-pos=5:bottom
+        --border-label-pos=bottom
         --border=rounded
         --color 'list-label:bold:red,input-label:bold:cyan,header-label:bold:yellow'
         --cycle
@@ -303,10 +303,10 @@ while true; do
             ueberzugpp cmd -s '$ubz_sock' -a remove -i $ubz_identifier &> /dev/null
             if [[ $(pwd) == '/' && {} == '..' ]]; then
                 echo -e ${red}'\n          ${dotdotadvice[0]}\n'${noc}
-                head -29 $ascii_file
+                head -29 $ASCII_FILE
             elif [[ {} == '..' ]]; then
                 echo -e ${ylw}'\n          ${dotdotadvice[1]}\n'${noc}
-                head -29 $ascii_file
+                head -29 $ASCII_FILE
             elif [[ -d {} ]]; then
                 tree -C {} | head -200
             elif [[ {} =~ ${IMAGE_EXTS}$ ]]; then
@@ -326,7 +326,7 @@ while true; do
             --expect=left,right,f12,ctrl-b,ctrl-d,ctrl-e,home \
             --expect=ctrl-p,ctrl-r,ctrl-t,ctrl-y,ctrl-x,ctrl-w \
             --list-label " Current dir: ${current_dir} " \
-            --border-label=" ${cyn}${bold}[ fzfm v_${version} - Theme: ${THEME} ] ${nobold}${noc}${ylw}      full path: $(pwd) ${noc}"
+            --border-label=" ${cyn}${bold}[ fzfm v_${VERSION} - Theme: ${THEME} ${nobold}${noc}- full path: $(pwd) ] ${noc}"
     )
 
     # If nothing selected (ESC or Ctrl-C), exit the loop
@@ -354,8 +354,8 @@ while true; do
         f12)
             # reload config and drop any ctrl-w flip,
             # so the new PREVIEW_POS takes effect immediately.
-            "$FZFM_EDITOR" "$config" && {
-                source "$config" && preview_flipped=false
+            "$FZFM_EDITOR" "$CONFIG" && {
+                source "$CONFIG" && preview_flipped=false
                 continue
             }
         ;;
@@ -365,7 +365,7 @@ while true; do
                 declare -a bookmarks=()
                 while read -r line; do
                     [[ ! $line =~ '#' ]] && bookmarks+=("${line}")
-                done < "${book_marks}"
+                done < "${BOOK_MARKS}"
 
                 bookmark_selection=$(
                     printf '%s\n' "${bookmarks[@]}" | fzf \
@@ -389,7 +389,7 @@ while true; do
                 mapfile -t bookmark_output <<< "$bookmark_selection"
                 bookmark_key="${bookmark_output[0]}"
                 selected_bookmark="${bookmark_output[1]}"
-                case $bookmark_key in ctrl-e) "$FZFM_EDITOR" "$book_marks"; continue ;; esac
+                case $bookmark_key in ctrl-e) "$FZFM_EDITOR" "$BOOK_MARKS"; continue ;; esac
                 selected_bookmark="${selected_bookmark/#~/$HOME}"
                 [[ -z $selected_bookmark ]] && break
                 [[ -d $selected_bookmark ]] && cd "$selected_bookmark"
