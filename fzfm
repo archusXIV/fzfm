@@ -66,7 +66,7 @@ for dep in "${deps[@]}"; do
             echo "$dep is needed but not installed, exiting..."
             exit 127
         }
-    elif (( n > ${#pkgs} )); then
+    elif (( n > ${#pkgs[@]} )); then
         [[ ! -f $dep ]] && {
             echo "${dep##*/} is needed but does not exist, exiting..."
             exit 127
